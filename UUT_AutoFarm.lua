@@ -27,9 +27,10 @@ table.sort(allUpgradeIds)
 
 -- Map CurrencyCost values to world names
 local currencyToWorld = {
-    Points = "Spawn", Clicks = "Spawn", TotalRolls = "Spawn", DailyPoints = "Spawn",
-    PortalFragment = "Spawn", PrestigePoints = "Spawn", EvilPoints = "Spawn",
+    Points = "Spawn", Clicks = "Spawn", TotalRolls = "Spawn",
+    PrestigePoints = "Spawn", EvilPoints = "Spawn",
     Bubbles = "Spawn", PlayerLevelPoints = "Spawn",
+    DailyPoints = "Spawn", PortalFragment = "Spawn",
     GalaxyPoints = "Galaxy", Rocks = "Galaxy", Steel = "Galaxy",
     DarkEnergie = "BlackHole", DarkPrestigeEnergie = "BlackHole",
     Token = "BlackHole", DarkEvilEnergie = "BlackHole",
@@ -44,6 +45,23 @@ local currencyToWorld = {
     VoidCurrency = "Void", WorldCurrency = "Void",
     AscendPoints = "Cycle", Shards = "Cycle",
     CosmicMatter = "Space", RocketParts = "Space", Stars = "Space",
+    Currency1 = "Unknown1", Currency2 = "Unknown2", Currency3 = "Unknown3",
+}
+
+local worldDisplayCurrencies = {
+    Spawn = "Points, Clicks, Rolls, Prestige, Evil, Bubbles, Skill Points",
+    Galaxy = "Galaxy Points, Rocks, Steel",
+    BlackHole = "Dark Energy, Dark Prestige, Token, Dark Evil",
+    AntiWorld = "Anti Points, Anti Prestige, Anti Evil",
+    Supernova = "Supernova Points",
+    Hecker = "Heck Credits",
+    Genesis = "Units, Blocks",
+    Tower = "Tower Points, Tower Prestige",
+    God = "Alpha, Coins",
+    Bigbang = "Wish, Beta, Memories",
+    Void = "Void Currency, World Currency",
+    Cycle = "Ascend Points, Shards",
+    Space = "Cosmic Matter, Rocket Parts, Stars",
 }
 
 -- Build per-world upgrade ID lists dynamically
@@ -873,7 +891,7 @@ mkLabel("World", "SELECT WORLD")
 for _, wName in ipairs(worldList) do
     local b = Instance.new("TextButton")
     b.LayoutOrder = nxt("World")
-    b.Size = UDim2.new(1, 0, 0, 36)
+    b.Size = UDim2.new(1, 0, 0, 40)
     b.Text = ""
     b.BorderSizePixel = 0
     b.ZIndex = 2
@@ -883,8 +901,8 @@ for _, wName in ipairs(worldList) do
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
 
     local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(1, -40, 1, 0)
-    l.Position = UDim2.new(0, 14, 0, 0)
+    l.Size = UDim2.new(1, -40, 0, 18)
+    l.Position = UDim2.new(0, 14, 0, 4)
     l.BackgroundTransparency = 1
     l.Text = wName
     l.Font = Enum.Font.GothamBold
@@ -893,6 +911,21 @@ for _, wName in ipairs(worldList) do
     l.ZIndex = 3
     l.Parent = b
     bnd(l, {TextColor3 = "text"})
+
+    if worldDisplayCurrencies[wName] then
+        local currPrev = Instance.new("TextLabel")
+        currPrev.Size = UDim2.new(1, -44, 0, 14)
+        currPrev.Position = UDim2.new(0, 14, 0, 20)
+        currPrev.BackgroundTransparency = 1
+        currPrev.Text = worldDisplayCurrencies[wName]
+        currPrev.Font = Enum.Font.Gotham
+        currPrev.TextSize = 9
+        currPrev.TextXAlignment = Enum.TextXAlignment.Left
+        currPrev.TextTruncate = Enum.TextTruncate.AtEnd
+        currPrev.ZIndex = 3
+        currPrev.Parent = b
+        bnd(currPrev, {TextColor3 = "dim"})
+    end
 
     local arrow = Instance.new("TextLabel")
     arrow.Size = UDim2.new(0, 20, 1, 0)
@@ -959,7 +992,23 @@ for _, wName in ipairs(worldList) do
     title.Parent = sub
     bnd(title, {TextColor3 = "text"})
 
-    -- Use nxt("World") for ordering within sub-pages
+    -- Currency info
+    if worldDisplayCurrencies[wName] then
+        local cInfo = Instance.new("TextLabel")
+        cInfo.LayoutOrder = 1.5
+        cInfo.Size = UDim2.new(1, 0, 0, 22)
+        cInfo.BackgroundTransparency = 1
+        cInfo.Text = "  " .. worldDisplayCurrencies[wName]
+        cInfo.Font = Enum.Font.Gotham
+        cInfo.TextSize = 11
+        cInfo.TextXAlignment = Enum.TextXAlignment.Left
+        cInfo.ZIndex = 3
+        cInfo.TextWrapped = true
+        cInfo.AutomaticSize = Enum.AutomaticSize.Y
+        cInfo.Parent = sub
+        bnd(cInfo, {TextColor3 = "sub"})
+    end
+
     -- TP button
     local tpBtn = Instance.new("TextButton")
     tpBtn.LayoutOrder = 2
