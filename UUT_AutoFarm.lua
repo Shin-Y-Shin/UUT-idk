@@ -1,6 +1,6 @@
 --[[
-    UUT Hub v6 — Untitled Upgrade Tree
-    World-based farming | Sakura petals | Custom BG | Modern tabs
+    UUT Hub v7 — Untitled Upgrade Tree
+    World-based farming | Session stats | Teleport tab | Modern tabs
 ]]
 
 if game.CoreGui:FindFirstChild("UUTHub") then game.CoreGui:FindFirstChild("UUTHub"):Destroy() end
@@ -66,30 +66,30 @@ local worldDisplayCurrencies = {
 
 local worldPrestige = {
     Spawn = {
-        {name = "Auto Prestige", fn = function() if PD.UnlockedPrestiges.Value then Remotes.Prestige:FireServer() end task.wait(1.5) end},
-        {name = "Auto Evil", fn = function() if PD.UnlockedEvil.Value then Remotes.Evil:FireServer() end task.wait(1.5) end},
-        {name = "Auto Loop", fn = function() Remotes.Loop:FireServer() task.wait(2) end},
+        {name = "Auto Prestige", fn = function() pcall(Remotes.Prestige.FireServer, Remotes.Prestige) task.wait(0.3) end},
+        {name = "Auto Evil", fn = function() pcall(Remotes.Evil.FireServer, Remotes.Evil) task.wait(0.3) end},
+        {name = "Auto Loop", fn = function() pcall(Remotes.Loop.FireServer, Remotes.Loop) task.wait(0.5) end},
     },
     BlackHole = {
-        {name = "Auto Dark Prestige", fn = function() local v = PD:FindFirstChild("UnlockedDarkPrestiges") if v and v.Value then Remotes.DarkPrestige:FireServer() end task.wait(1.5) end},
-        {name = "Auto Dark Evil", fn = function() local v = PD:FindFirstChild("UnlockedDarkEvil") if v and v.Value then Remotes.DarkEvil:FireServer() end task.wait(1.5) end},
+        {name = "Auto Dark Prestige", fn = function() pcall(Remotes.DarkPrestige.FireServer, Remotes.DarkPrestige) task.wait(0.3) end},
+        {name = "Auto Dark Evil", fn = function() pcall(Remotes.DarkEvil.FireServer, Remotes.DarkEvil) task.wait(0.3) end},
     },
     AntiWorld = {
-        {name = "Auto Anti-Prestige", fn = function() local v = PD:FindFirstChild("UnlockedAntiPrestige") if v and v.Value then Remotes.AntiPrestige:FireServer() end task.wait(1.5) end},
-        {name = "Auto Anti-Evil", fn = function() local v = PD:FindFirstChild("UnlockedAntiEvil") if v and v.Value then Remotes.AntiEvil:FireServer() end task.wait(1.5) end},
+        {name = "Auto Anti-Prestige", fn = function() pcall(Remotes.AntiPrestige.FireServer, Remotes.AntiPrestige) task.wait(0.3) end},
+        {name = "Auto Anti-Evil", fn = function() pcall(Remotes.AntiEvil.FireServer, Remotes.AntiEvil) task.wait(0.3) end},
     },
     Supernova = {
-        {name = "Auto Supernova", fn = function() if PD.UnlockedSupernova.Value or PD.Loop.Value >= 11 then Remotes.Supernova:FireServer() end task.wait(2) end},
+        {name = "Auto Supernova", fn = function() pcall(Remotes.Supernova.FireServer, Remotes.Supernova) task.wait(0.5) end},
     },
     Cycle = {
-        {name = "Auto Ascend", fn = function() local v = PD:FindFirstChild("UnlockedAscend") if v and v.Value then Remotes.Ascend:FireServer() end task.wait(2) end},
-        {name = "Auto Cycle", fn = function() local u = Upgrades:FindFirstChild("405") if u and u.Value >= 1 then Remotes.Cycle:FireServer() end task.wait(2) end},
+        {name = "Auto Ascend", fn = function() pcall(Remotes.Ascend.FireServer, Remotes.Ascend) task.wait(0.5) end},
+        {name = "Auto Cycle", fn = function() pcall(Remotes.Cycle.FireServer, Remotes.Cycle) task.wait(0.5) end},
     },
     Tower = {
-        {name = "Auto Tower Prestige", fn = function() local v = PD:FindFirstChild("UnlockedTowerPrestige") if v and v.Value then Remotes.TowerPrestige:FireServer() end task.wait(1.5) end},
+        {name = "Auto Tower Prestige", fn = function() pcall(Remotes.TowerPrestige.FireServer, Remotes.TowerPrestige) task.wait(0.3) end},
     },
     Bigbang = {
-        {name = "Auto Beta", fn = function() local v = PD:FindFirstChild("UnlockedBeta") if v and v.Value then Remotes.Beta:FireServer() end task.wait(1.5) end},
+        {name = "Auto Beta", fn = function() pcall(Remotes.Beta.FireServer, Remotes.Beta) task.wait(0.3) end},
     },
 }
 
@@ -160,6 +160,18 @@ local toggles = {}
 local threads = {}
 local sakuraEnabled = false
 local activeWorld = nil
+local sessionStart = os.clock()
+local statsUpgBought = 0
+local statsRebirths = 0
+
+local worldTPZones = {
+    Spawn = "Baseplate", Galaxy = "BaseplateGalaxie", BlackHole = "BaseplateBlackhole",
+    AntiWorld = "BaseplateAntiWorld", Supernova = "BaseplateSupernova",
+    Hecker = "HeckerBaseplate", Genesis = "GenesisBaseplate", Tower = "TowerBaseplate",
+    God = "Playtime", Bigbang = "Temple", Void = "Void", Cycle = "Cycle", Space = "GroundSpace",
+}
+
+local worldHasClick = {Spawn = true}
 
 local function loop(key, fn)
     table.insert(threads, task.spawn(function()
@@ -260,7 +272,7 @@ local VerLbl = Instance.new("TextLabel")
 VerLbl.Size = UDim2.new(0, 40, 0, 14)
 VerLbl.Position = UDim2.new(0, 90, 0.5, -7)
 VerLbl.BackgroundTransparency = 1
-VerLbl.Text = "v6"
+VerLbl.Text = "v7"
 VerLbl.Font = Enum.Font.Gotham
 VerLbl.TextSize = 10
 VerLbl.ZIndex = 7
@@ -293,7 +305,7 @@ end)
 -- RIGHT TAB BAR
 --------------------------------------------------------------
 local TAB_W = 90
-local tabNames = {"Home", "World", "Player", "Misc"}
+local tabNames = {"Home", "World", "Teleport", "Player", "Misc"}
 
 local TabPanel = Instance.new("Frame")
 TabPanel.Size = UDim2.new(0, TAB_W, 1, -40)
@@ -721,26 +733,29 @@ local function smartTP(worldName)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
+    local zoneName = worldTPZones[worldName]
     local pos
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("BasePart") and v:GetAttribute("isZoneBlock") then
-            local cur = v:GetAttribute("SortCurrency")
-            if cur and (cur == worldName or cur:lower() == worldName:lower()
-                or cur == worldName .. "Points" or cur == worldName:sub(1, 1):upper() .. worldName:sub(2) .. "Points") then
-                pos = v.Position
-                break
+    if zoneName then
+        local zone = workspace:FindFirstChild(zoneName)
+        if zone then
+            for _, v in pairs(zone:GetDescendants()) do
+                if v:IsA("BasePart") and v:GetAttribute("isZoneBlock") then
+                    pos = v.Position
+                    break
+                end
+            end
+            if not pos then
+                local p = zone:IsA("BasePart") and zone or zone:FindFirstChildWhichIsA("BasePart", true)
+                if p then pos = p.Position end
             end
         end
     end
 
     if not pos then
-        local other = workspace:FindFirstChild("Other")
-        if other then
-            for _, m in pairs(other:GetChildren()) do
-                if m:IsA("Model") and m.Name:lower() == worldName:lower() then
-                    local p = m.PrimaryPart or m:FindFirstChildWhichIsA("BasePart", true)
-                    if p then pos = p.Position + Vector3.new(0, 5, 0) break end
-                end
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v:GetAttribute("isZoneBlock") and v.Parent and v.Parent.Name == zoneName then
+                pos = v.Position
+                break
             end
         end
     end
@@ -749,7 +764,7 @@ local function smartTP(worldName)
         pcall(function() LP:RequestStreamAroundAsync(pos, 10) end)
         hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
     end
-    Remotes.ChangeWorld:FireServer(worldName)
+    pcall(function() Remotes.ChangeWorld:FireServer(worldName) end)
 end
 
 --------------------------------------------------------------
@@ -841,6 +856,69 @@ end)
 mkInfo("Home", function()
     return "Players: " .. #Players:GetPlayers() .. "  |  Server: " .. string.sub(game.JobId, 1, 8) .. "..."
 end)
+
+mkSpacer("Home", 4)
+mkLabel("Home", "SESSION STATS")
+
+mkInfo("Home", function()
+    local elapsed = os.clock() - sessionStart
+    local h = math.floor(elapsed / 3600)
+    local m = math.floor((elapsed % 3600) / 60)
+    local s = math.floor(elapsed % 60)
+    return "Session: " .. string.format("%02d:%02d:%02d", h, m, s)
+end)
+mkInfo("Home", function()
+    return "Upgrades Bought: " .. statsUpgBought .. "  |  Rebirths: " .. statsRebirths
+end)
+
+--------------------------------------------------------------
+-- TELEPORT TAB
+--------------------------------------------------------------
+mkLabel("Teleport", "QUICK TELEPORT")
+
+for _, wName in ipairs(worldList) do
+    local tpB = Instance.new("TextButton")
+    tpB.LayoutOrder = nxt("Teleport")
+    tpB.Size = UDim2.new(1, 0, 0, 34)
+    tpB.Text = ""
+    tpB.BorderSizePixel = 0
+    tpB.ZIndex = 2
+    tpB.AutoButtonColor = false
+    tpB.Parent = tabPages.Teleport
+    bnd(tpB, {BackgroundColor3 = "card"})
+    Instance.new("UICorner", tpB).CornerRadius = UDim.new(0, 8)
+
+    local tpL = Instance.new("TextLabel")
+    tpL.Size = UDim2.new(1, -20, 1, 0)
+    tpL.Position = UDim2.new(0, 14, 0, 0)
+    tpL.BackgroundTransparency = 1
+    tpL.Text = wName
+    tpL.Font = Enum.Font.GothamBold
+    tpL.TextSize = 13
+    tpL.TextXAlignment = Enum.TextXAlignment.Left
+    tpL.ZIndex = 3
+    tpL.Parent = tpB
+    bnd(tpL, {TextColor3 = "text"})
+
+    local tpArr = Instance.new("TextLabel")
+    tpArr.Size = UDim2.new(0, 20, 1, 0)
+    tpArr.Position = UDim2.new(1, -28, 0, 0)
+    tpArr.BackgroundTransparency = 1
+    tpArr.Text = ">"
+    tpArr.Font = Enum.Font.GothamBold
+    tpArr.TextSize = 14
+    tpArr.ZIndex = 3
+    tpArr.Parent = tpB
+    bnd(tpArr, {TextColor3 = "dim"})
+
+    tpB.MouseButton1Click:Connect(function()
+        tw(tpB, {BackgroundColor3 = C.accent}, 0.08)
+        task.delay(0.3, function() tw(tpB, {BackgroundColor3 = C.card}, 0.2) end)
+        smartTP(wName)
+    end)
+    tpB.MouseEnter:Connect(function() tw(tpB, {BackgroundColor3 = C.cardH}, 0.12) end)
+    tpB.MouseLeave:Connect(function() tw(tpB, {BackgroundColor3 = C.card}, 0.12) end)
+end
 
 --------------------------------------------------------------
 -- WORLD TAB (world list + per-world sub-pages)
@@ -976,11 +1054,71 @@ for _, wName in ipairs(worldList) do
     b.MouseLeave:Connect(function() tw(b, {BackgroundColor3 = C.card}, 0.12) end)
 end
 
+-- Helper: create a toggle inside a sub-page with a custom key
+local function mkSubToggle(sub, displayName, key)
+    toggles[key] = false
+    local h = Instance.new("Frame")
+    h.LayoutOrder = nxt("World")
+    h.Size = UDim2.new(1, 0, 0, 36)
+    h.BorderSizePixel = 0
+    h.ZIndex = 3
+    h.Parent = sub
+    bnd(h, {BackgroundColor3 = "card"})
+    Instance.new("UICorner", h).CornerRadius = UDim.new(0, 8)
+
+    local l = Instance.new("TextLabel")
+    l.Size = UDim2.new(1, -56, 1, 0)
+    l.Position = UDim2.new(0, 14, 0, 0)
+    l.BackgroundTransparency = 1
+    l.Text = displayName
+    l.Font = Enum.Font.Gotham
+    l.TextSize = 13
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.ZIndex = 4
+    l.Parent = h
+    bnd(l, {TextColor3 = "text"})
+
+    local tr = Instance.new("TextButton")
+    tr.Size = UDim2.new(0, 38, 0, 20)
+    tr.Position = UDim2.new(1, -48, 0.5, -10)
+    tr.Text = ""
+    tr.BorderSizePixel = 0
+    tr.ZIndex = 4
+    tr.AutoButtonColor = false
+    tr.Parent = h
+    Instance.new("UICorner", tr).CornerRadius = UDim.new(1, 0)
+
+    local kn = Instance.new("Frame")
+    kn.Size = UDim2.new(0, 16, 0, 16)
+    kn.Position = UDim2.new(0, 2, 0.5, -8)
+    kn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    kn.BorderSizePixel = 0
+    kn.ZIndex = 5
+    kn.Parent = tr
+    Instance.new("UICorner", kn).CornerRadius = UDim.new(1, 0)
+
+    local function ref()
+        local on = toggles[key]
+        tw(tr, {BackgroundColor3 = on and C.on or C.off}, 0.2)
+        tw(kn, {Position = on and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}, 0.2)
+    end
+    ref()
+    table.insert(togRefresh, ref)
+
+    tr.MouseButton1Click:Connect(function()
+        toggles[key] = not toggles[key]
+        ref()
+    end)
+
+    h.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(h, {BackgroundColor3 = C.cardH}, 0.12) end end)
+    h.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(h, {BackgroundColor3 = C.card}, 0.12) end end)
+end
+
 -- Build each world's sub-page content
 for _, wName in ipairs(worldList) do
     local sub = worldSubPages[wName]
-    local clickKey = "AutoClick_" .. wName
     local buyKey = "AutoBuy_" .. wName
+    local clickKey = "AutoClick_" .. wName
 
     -- Back button
     local back = Instance.new("TextButton")
@@ -1024,7 +1162,7 @@ for _, wName in ipairs(worldList) do
     -- Currency info
     if worldDisplayCurrencies[wName] then
         local cInfo = Instance.new("TextLabel")
-        cInfo.LayoutOrder = 1.5
+        cInfo.LayoutOrder = 2
         cInfo.Size = UDim2.new(1, 0, 0, 22)
         cInfo.BackgroundTransparency = 1
         cInfo.Text = "  " .. worldDisplayCurrencies[wName]
@@ -1038,43 +1176,8 @@ for _, wName in ipairs(worldList) do
         bnd(cInfo, {TextColor3 = "sub"})
     end
 
-    -- TP button
-    local tpBtn = Instance.new("TextButton")
-    tpBtn.LayoutOrder = 2
-    tpBtn.Size = UDim2.new(1, 0, 0, 34)
-    tpBtn.Text = ""
-    tpBtn.BorderSizePixel = 0
-    tpBtn.ZIndex = 3
-    tpBtn.AutoButtonColor = false
-    tpBtn.Parent = sub
-    bnd(tpBtn, {BackgroundColor3 = "accent"})
-    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 8)
-
-    local tpLbl = Instance.new("TextLabel")
-    tpLbl.Size = UDim2.new(1, 0, 1, 0)
-    tpLbl.BackgroundTransparency = 1
-    tpLbl.Text = "Teleport to " .. wName
-    tpLbl.Font = Enum.Font.GothamBold
-    tpLbl.TextSize = 13
-    tpLbl.ZIndex = 4
-    tpLbl.Parent = tpBtn
-    bnd(tpLbl, {TextColor3 = "bg"})
-
-    tpBtn.MouseButton1Click:Connect(function()
-        tw(tpBtn, {BackgroundColor3 = C.card}, 0.08)
-        task.delay(0.2, function() tw(tpBtn, {BackgroundColor3 = C.accent}, 0.2) end)
-        smartTP(wName)
-    end)
-
-    -- Spacer
-    local sp1 = Instance.new("Frame")
-    sp1.LayoutOrder = 3
-    sp1.Size = UDim2.new(1, 0, 0, 4)
-    sp1.BackgroundTransparency = 1
-    sp1.Parent = sub
-
     local farmTitle = Instance.new("TextLabel")
-    farmTitle.LayoutOrder = 4
+    farmTitle.LayoutOrder = nxt("World")
     farmTitle.Size = UDim2.new(1, 0, 0, 20)
     farmTitle.BackgroundTransparency = 1
     farmTitle.Text = "  AUTO FARM"
@@ -1085,132 +1188,25 @@ for _, wName in ipairs(worldList) do
     farmTitle.Parent = sub
     bnd(farmTitle, {TextColor3 = "accent"})
 
-    -- Auto Click toggle (per world)
-    toggles[clickKey] = false
-    local clickFrame = Instance.new("Frame")
-    clickFrame.LayoutOrder = 5
-    clickFrame.Size = UDim2.new(1, 0, 0, 36)
-    clickFrame.BorderSizePixel = 0
-    clickFrame.ZIndex = 3
-    clickFrame.Parent = sub
-    bnd(clickFrame, {BackgroundColor3 = "card"})
-    Instance.new("UICorner", clickFrame).CornerRadius = UDim.new(0, 8)
-
-    local clickLbl = Instance.new("TextLabel")
-    clickLbl.Size = UDim2.new(1, -56, 1, 0)
-    clickLbl.Position = UDim2.new(0, 14, 0, 0)
-    clickLbl.BackgroundTransparency = 1
-    clickLbl.Text = "Auto Click"
-    clickLbl.Font = Enum.Font.Gotham
-    clickLbl.TextSize = 13
-    clickLbl.TextXAlignment = Enum.TextXAlignment.Left
-    clickLbl.ZIndex = 4
-    clickLbl.Parent = clickFrame
-    bnd(clickLbl, {TextColor3 = "text"})
-
-    local clickTog = Instance.new("TextButton")
-    clickTog.Size = UDim2.new(0, 38, 0, 20)
-    clickTog.Position = UDim2.new(1, -48, 0.5, -10)
-    clickTog.Text = ""
-    clickTog.BorderSizePixel = 0
-    clickTog.ZIndex = 4
-    clickTog.AutoButtonColor = false
-    clickTog.Parent = clickFrame
-    Instance.new("UICorner", clickTog).CornerRadius = UDim.new(1, 0)
-
-    local clickKn = Instance.new("Frame")
-    clickKn.Size = UDim2.new(0, 16, 0, 16)
-    clickKn.Position = UDim2.new(0, 2, 0.5, -8)
-    clickKn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    clickKn.BorderSizePixel = 0
-    clickKn.ZIndex = 5
-    clickKn.Parent = clickTog
-    Instance.new("UICorner", clickKn).CornerRadius = UDim.new(1, 0)
-
-    local function clickRef()
-        local on = toggles[clickKey]
-        tw(clickTog, {BackgroundColor3 = on and C.on or C.off}, 0.2)
-        tw(clickKn, {Position = on and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}, 0.2)
+    -- Auto Click toggle (only for Spawn)
+    if worldHasClick[wName] then
+        mkSubToggle(sub, "Auto Click", clickKey)
+        loop(clickKey, function() Remotes.Clicker:FireServer() task.wait(0.05) end)
     end
-    clickRef()
-    table.insert(togRefresh, clickRef)
 
-    clickTog.MouseButton1Click:Connect(function()
-        toggles[clickKey] = not toggles[clickKey]
-        clickRef()
-    end)
-
-    clickFrame.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(clickFrame, {BackgroundColor3 = C.cardH}, 0.12) end end)
-    clickFrame.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(clickFrame, {BackgroundColor3 = C.card}, 0.12) end end)
-
-    -- Auto Buy toggle (per world)
-    toggles[buyKey] = false
-    local buyFrame = Instance.new("Frame")
-    buyFrame.LayoutOrder = 6
-    buyFrame.Size = UDim2.new(1, 0, 0, 36)
-    buyFrame.BorderSizePixel = 0
-    buyFrame.ZIndex = 3
-    buyFrame.Parent = sub
-    bnd(buyFrame, {BackgroundColor3 = "card"})
-    Instance.new("UICorner", buyFrame).CornerRadius = UDim.new(0, 8)
-
-    local buyLbl = Instance.new("TextLabel")
-    buyLbl.Size = UDim2.new(1, -56, 1, 0)
-    buyLbl.Position = UDim2.new(0, 14, 0, 0)
-    buyLbl.BackgroundTransparency = 1
-    buyLbl.Text = "Auto Buy Upgrades"
-    buyLbl.Font = Enum.Font.Gotham
-    buyLbl.TextSize = 13
-    buyLbl.TextXAlignment = Enum.TextXAlignment.Left
-    buyLbl.ZIndex = 4
-    buyLbl.Parent = buyFrame
-    bnd(buyLbl, {TextColor3 = "text"})
-
-    local buyTog = Instance.new("TextButton")
-    buyTog.Size = UDim2.new(0, 38, 0, 20)
-    buyTog.Position = UDim2.new(1, -48, 0.5, -10)
-    buyTog.Text = ""
-    buyTog.BorderSizePixel = 0
-    buyTog.ZIndex = 4
-    buyTog.AutoButtonColor = false
-    buyTog.Parent = buyFrame
-    Instance.new("UICorner", buyTog).CornerRadius = UDim.new(1, 0)
-
-    local buyKn = Instance.new("Frame")
-    buyKn.Size = UDim2.new(0, 16, 0, 16)
-    buyKn.Position = UDim2.new(0, 2, 0.5, -8)
-    buyKn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    buyKn.BorderSizePixel = 0
-    buyKn.ZIndex = 5
-    buyKn.Parent = buyTog
-    Instance.new("UICorner", buyKn).CornerRadius = UDim.new(1, 0)
-
-    local function buyRef()
-        local on = toggles[buyKey]
-        tw(buyTog, {BackgroundColor3 = on and C.on or C.off}, 0.2)
-        tw(buyKn, {Position = on and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}, 0.2)
-    end
-    buyRef()
-    table.insert(togRefresh, buyRef)
-
-    buyTog.MouseButton1Click:Connect(function()
-        toggles[buyKey] = not toggles[buyKey]
-        buyRef()
-    end)
-
-    buyFrame.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(buyFrame, {BackgroundColor3 = C.cardH}, 0.12) end end)
-    buyFrame.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(buyFrame, {BackgroundColor3 = C.card}, 0.12) end end)
+    -- Auto Buy toggle
+    mkSubToggle(sub, "Auto Buy Upgrades", buyKey)
 
     -- Prestige toggles for this world
     if worldPrestige[wName] then
         local pSpacer = Instance.new("Frame")
-        pSpacer.LayoutOrder = 7
+        pSpacer.LayoutOrder = nxt("World")
         pSpacer.Size = UDim2.new(1, 0, 0, 4)
         pSpacer.BackgroundTransparency = 1
         pSpacer.Parent = sub
 
         local pTitle = Instance.new("TextLabel")
-        pTitle.LayoutOrder = 8
+        pTitle.LayoutOrder = nxt("World")
         pTitle.Size = UDim2.new(1, 0, 0, 20)
         pTitle.BackgroundTransparency = 1
         pTitle.Text = "  REBIRTH"
@@ -1221,22 +1217,25 @@ for _, wName in ipairs(worldList) do
         pTitle.Parent = sub
         bnd(pTitle, {TextColor3 = "accent"})
 
-        for pi, pInfo in ipairs(worldPrestige[wName]) do
-            mkToggle("World", pInfo.name, nil, sub)
-            loop(pInfo.name, pInfo.fn)
+        for _, pInfo in ipairs(worldPrestige[wName]) do
+            mkSubToggle(sub, pInfo.name, pInfo.name)
+            loop(pInfo.name, function()
+                pcall(pInfo.fn)
+                statsRebirths = statsRebirths + 1
+            end)
         end
     end
 
-    -- Loops for this world
-    loop(clickKey, function() Remotes.Clicker:FireServer() task.wait(0.05) end)
-
+    -- Auto Buy loop (faster: 0.1s between rounds)
     loop(buyKey, function()
         local ids = worldUpgrades[wName] or {}
+        if #ids == 0 then task.wait(0.5) return end
         for _, id in ipairs(ids) do
             if not getgenv().UUT_RUNNING or not toggles[buyKey] then break end
-            pcall(Remotes.BuyUpg.FireServer, Remotes.BuyUpg, id)
+            local ok = pcall(Remotes.BuyUpg.FireServer, Remotes.BuyUpg, id)
+            if ok then statsUpgBought = statsUpgBought + 1 end
         end
-        task.wait(0.5)
+        task.wait(0.1)
     end)
 end
 
@@ -1519,4 +1518,4 @@ Main.Size = UDim2.new(0, 520, 0, 0)
 Main.BackgroundTransparency = 1
 tw(Main, {Size = UDim2.new(0, 520, 0, 380), BackgroundTransparency = 0}, 0.45)
 
-print("[UUT Hub] v6 loaded | RightShift to toggle")
+print("[UUT Hub] v7 loaded | RightShift to toggle")
