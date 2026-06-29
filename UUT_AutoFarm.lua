@@ -943,10 +943,8 @@ do
                 BgImage.ImageTransparency = 1
                 BgOverlay.BackgroundTransparency = 1
             else
-                if not id:find("rbxassetid://") then
-                    id = "rbxassetid://" .. id
-                end
-                BgImage.Image = id
+                id = id:gsub("rbxassetid://", "")
+                BgImage.Image = "rbxthumb://type=Asset&id=" .. id .. "&w=768&h=432"
                 BgImage.ImageTransparency = 0
                 BgOverlay.BackgroundTransparency = 0.55
             end
@@ -958,7 +956,7 @@ mkSpacer("Misc", 2)
 mkLabel("Misc", "PRESETS")
 
 local function setBg(id)
-    BgImage.Image = "rbxassetid://" .. id
+    BgImage.Image = "rbxthumb://type=Asset&id=" .. id .. "&w=768&h=432"
     BgImage.ImageTransparency = 0
     BgOverlay.BackgroundTransparency = 0.55
 end
