@@ -25,6 +25,48 @@ for _, v in pairs(Upgrades:GetChildren()) do
 end
 table.sort(allUpgradeIds)
 
+-- Map CurrencyCost values to world names
+local currencyToWorld = {
+    Points = "Spawn", Clicks = "Spawn", TotalRolls = "Spawn", DailyPoints = "Spawn",
+    PortalFragment = "Spawn", PrestigePoints = "Spawn", EvilPoints = "Spawn",
+    Bubbles = "Spawn", PlayerLevelPoints = "Spawn",
+    GalaxyPoints = "Galaxy", Rocks = "Galaxy", Steel = "Galaxy",
+    DarkEnergie = "BlackHole", DarkPrestigeEnergie = "BlackHole",
+    Token = "BlackHole", DarkEvilEnergie = "BlackHole",
+    AntiPoint = "AntiWorld", AntiPrestigePoint = "AntiWorld",
+    AntiEvilPoint = "AntiWorld", AntiLevelsToken = "AntiWorld",
+    SupernovaPoint = "Supernova",
+    Hecker = "Hecker",
+    Units = "Genesis", Blocks = "Genesis",
+    TowerPoints = "Tower", TowerPrestigePoints = "Tower",
+    Alpha = "God", Coins = "God",
+    WishToken = "Bigbang", Beta = "Bigbang", Memories = "Bigbang",
+    VoidCurrency = "Void", WorldCurrency = "Void",
+    AscendPoints = "Cycle", Shards = "Cycle",
+    CosmicMatter = "Space", RocketParts = "Space", Stars = "Space",
+}
+
+-- Build per-world upgrade ID lists dynamically
+local worldUpgrades = {}
+local worldList = {"Spawn", "Galaxy", "BlackHole", "AntiWorld", "Supernova", "Hecker", "Genesis", "Tower", "God", "Bigbang", "Void", "Cycle", "Space"}
+for _, w in ipairs(worldList) do worldUpgrades[w] = {} end
+
+pcall(function()
+    local UpgModule = require(RS.Modules.Upgrades)
+    for id, data in pairs(UpgModule) do
+        if type(data) == "table" then
+            local cc = type(data.CurrencyCost) == "string" and data.CurrencyCost or nil
+            if cc then
+                local world = currencyToWorld[cc]
+                if world and worldUpgrades[world] then
+                    table.insert(worldUpgrades[world], id)
+                end
+            end
+        end
+    end
+end)
+for _, ids in pairs(worldUpgrades) do table.sort(ids) end
+
 --------------------------------------------------------------
 -- THEME ENGINE
 --------------------------------------------------------------
@@ -756,8 +798,6 @@ end)
 --------------------------------------------------------------
 -- WORLD TAB (world list + per-world sub-pages)
 --------------------------------------------------------------
-local worldList = {"Spawn", "Galaxy", "BlackHole", "AntiWorld", "Supernova", "Hecker", "Genesis", "Tower", "God", "Bigbang", "Void", "Cycle", "Space"}
-
 -- World list page (the main scrolling frame for World tab)
 local worldListPage = tabPages.World
 
@@ -1087,7 +1127,8 @@ for _, wName in ipairs(worldList) do
     loop(clickKey, function() Remotes.Clicker:FireServer() task.wait(0.05) end)
 
     loop(buyKey, function()
-        for _, id in ipairs(allUpgradeIds) do
+        local ids = worldUpgrades[wName] or {}
+        for _, id in ipairs(ids) do
             if not getgenv().UUT_RUNNING or not toggles[buyKey] then break end
             pcall(Remotes.BuyUpg.FireServer, Remotes.BuyUpg, id)
         end
