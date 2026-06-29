@@ -1,6 +1,6 @@
 --[[
-    UUT Hub v5 — Untitled Upgrade Tree
-    Sakura petals | Custom BG | Hover anims | Modern tabs
+    UUT Hub v6 — Untitled Upgrade Tree
+    World-based farming | Sakura petals | Custom BG | Modern tabs
 ]]
 
 if game.CoreGui:FindFirstChild("UUTHub") then game.CoreGui:FindFirstChild("UUTHub"):Destroy() end
@@ -70,7 +70,7 @@ end
 local toggles = {}
 local threads = {}
 local sakuraEnabled = false
-local sakuraPetals = {}
+local activeWorld = nil
 
 local function loop(key, fn)
     table.insert(threads, task.spawn(function()
@@ -99,7 +99,6 @@ Main.Parent = Gui
 bnd(Main, {BackgroundColor3 = "bg"})
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 
--- Background image layer
 local BgImage = Instance.new("ImageLabel")
 BgImage.Name = "BgImage"
 BgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -109,7 +108,6 @@ BgImage.ScaleType = Enum.ScaleType.Crop
 BgImage.ZIndex = 0
 BgImage.Parent = Main
 
--- Overlay for readability on top of background image
 local BgOverlay = Instance.new("Frame")
 BgOverlay.Size = UDim2.new(1, 0, 1, 0)
 BgOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -118,7 +116,6 @@ BgOverlay.ZIndex = 0
 BgOverlay.BorderSizePixel = 0
 BgOverlay.Parent = Main
 
--- Sakura petal container
 local SakuraContainer = Instance.new("Frame")
 SakuraContainer.Size = UDim2.new(1, 0, 1, 0)
 SakuraContainer.BackgroundTransparency = 1
@@ -150,7 +147,6 @@ TopDiv.ZIndex = 6
 TopDiv.Parent = TopBar
 bnd(TopDiv, {BackgroundColor3 = "border"})
 
--- Accent glow line under title
 local GlowLine = Instance.new("Frame")
 GlowLine.Size = UDim2.new(0, 60, 0, 2)
 GlowLine.Position = UDim2.new(0, 14, 1, -2)
@@ -175,7 +171,7 @@ local VerLbl = Instance.new("TextLabel")
 VerLbl.Size = UDim2.new(0, 40, 0, 14)
 VerLbl.Position = UDim2.new(0, 90, 0.5, -7)
 VerLbl.BackgroundTransparency = 1
-VerLbl.Text = "v5"
+VerLbl.Text = "v6"
 VerLbl.Font = Enum.Font.Gotham
 VerLbl.TextSize = 10
 VerLbl.ZIndex = 7
@@ -208,7 +204,7 @@ end)
 -- RIGHT TAB BAR
 --------------------------------------------------------------
 local TAB_W = 90
-local tabNames = {"Home", "Farm", "Prestige", "Player", "Misc"}
+local tabNames = {"Home", "World", "Prestige", "Player", "Misc"}
 
 local TabPanel = Instance.new("Frame")
 TabPanel.Size = UDim2.new(0, TAB_W, 1, -40)
@@ -218,7 +214,6 @@ TabPanel.ZIndex = 5
 TabPanel.Parent = Main
 bnd(TabPanel, {BackgroundColor3 = "tabBg"})
 
--- Divider line (parented to Main, not TabPanel)
 local TabDiv = Instance.new("Frame")
 TabDiv.Size = UDim2.new(0, 1, 1, -40)
 TabDiv.Position = UDim2.new(1, -TAB_W, 0, 40)
@@ -231,7 +226,6 @@ local tabBtns = {}
 local tabPages = {}
 local activeTab = nil
 
--- Manually position each tab button (no UIListLayout)
 for i, name in ipairs(tabNames) do
     local btn = Instance.new("TextButton")
     btn.Name = name
@@ -247,7 +241,6 @@ for i, name in ipairs(tabNames) do
     bnd(btn, {BackgroundColor3 = "tabBg", TextColor3 = "sub"})
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
 
-    -- Hover animation
     btn.MouseEnter:Connect(function()
         if activeTab ~= name then
             twBack(btn, {Size = UDim2.new(1, -6, 0, 42), BackgroundColor3 = C.cardH}, 0.2)
@@ -300,7 +293,6 @@ for _, name in ipairs(tabNames) do
     tabPages[name] = page
 end
 
--- Tab switching with animations
 local function switchTab(name)
     activeTab = name
     for n, p in pairs(tabPages) do p.Visible = (n == name) end
@@ -365,7 +357,7 @@ UIS.InputChanged:Connect(function(i)
 end)
 
 --------------------------------------------------------------
--- SAKURA PETALS SYSTEM
+-- SAKURA PETALS
 --------------------------------------------------------------
 local petalColors = {
     Color3.fromRGB(255, 183, 197),
@@ -377,9 +369,8 @@ local petalColors = {
 
 local function spawnPetal()
     if not sakuraEnabled or not getgenv().UUT_RUNNING then return end
-
     local petal = Instance.new("TextLabel")
-    petal.Text = "❀"
+    petal.Text = "*"
     petal.TextSize = math.random(10, 20)
     petal.Font = Enum.Font.SourceSansBold
     petal.TextColor3 = petalColors[math.random(1, #petalColors)]
@@ -388,33 +379,24 @@ local function spawnPetal()
     petal.ZIndex = 1
     petal.TextTransparency = math.random(20, 50) / 100
     petal.Rotation = math.random(0, 360)
-
     local startX = math.random(0, 100) / 100
     petal.Position = UDim2.new(startX, 0, -0.05, 0)
     petal.Parent = SakuraContainer
-
     local duration = math.random(30, 60) / 10
     local endX = startX + math.random(-20, 20) / 100
-
     local t1 = TS:Create(petal, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
         Position = UDim2.new(endX, 0, 1.1, 0),
         Rotation = petal.Rotation + math.random(-180, 180),
         TextTransparency = 0.8
     })
     t1:Play()
-    t1.Completed:Connect(function()
-        petal:Destroy()
-    end)
+    t1.Completed:Connect(function() petal:Destroy() end)
 end
 
 table.insert(threads, task.spawn(function()
     while getgenv().UUT_RUNNING do
-        if sakuraEnabled then
-            for _ = 1, 2 do spawnPetal() end
-            task.wait(0.3)
-        else
-            task.wait(0.5)
-        end
+        if sakuraEnabled then for _ = 1, 2 do spawnPetal() end task.wait(0.3)
+        else task.wait(0.5) end
     end
 end))
 
@@ -425,7 +407,7 @@ local ords = {}
 for _, n in ipairs(tabNames) do ords[n] = 0 end
 local function nxt(t) ords[t] = ords[t] + 1 return ords[t] end
 
-local function mkLabel(tab, txt)
+local function mkLabel(tab, txt, parent)
     local l = Instance.new("TextLabel")
     l.LayoutOrder = nxt(tab)
     l.Size = UDim2.new(1, 0, 0, 20)
@@ -435,28 +417,28 @@ local function mkLabel(tab, txt)
     l.TextSize = 11
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.ZIndex = 2
-    l.Parent = tabPages[tab]
+    l.Parent = parent or tabPages[tab]
     bnd(l, {TextColor3 = "accent"})
     return l
 end
 
-local function mkSpacer(tab, h)
+local function mkSpacer(tab, h, parent)
     local s = Instance.new("Frame")
     s.LayoutOrder = nxt(tab)
     s.Size = UDim2.new(1, 0, 0, h or 4)
     s.BackgroundTransparency = 1
     s.ZIndex = 2
-    s.Parent = tabPages[tab]
+    s.Parent = parent or tabPages[tab]
 end
 
-local function mkToggle(tab, name, cb)
+local function mkToggle(tab, name, cb, parent)
     toggles[name] = false
     local h = Instance.new("Frame")
     h.LayoutOrder = nxt(tab)
     h.Size = UDim2.new(1, 0, 0, 36)
     h.BorderSizePixel = 0
     h.ZIndex = 2
-    h.Parent = tabPages[tab]
+    h.Parent = parent or tabPages[tab]
     bnd(h, {BackgroundColor3 = "card"})
     Instance.new("UICorner", h).CornerRadius = UDim.new(0, 8)
 
@@ -505,18 +487,17 @@ local function mkToggle(tab, name, cb)
         if cb then cb(toggles[name]) end
     end)
 
-    -- Card hover
     h.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(h, {BackgroundColor3 = C.cardH}, 0.12) end end)
     h.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(h, {BackgroundColor3 = C.card}, 0.12) end end)
 end
 
-local function mkSlider(tab, name, mn, mx, def, cb)
+local function mkSlider(tab, name, mn, mx, def, cb, parent)
     local h = Instance.new("Frame")
     h.LayoutOrder = nxt(tab)
     h.Size = UDim2.new(1, 0, 0, 50)
     h.BorderSizePixel = 0
     h.ZIndex = 2
-    h.Parent = tabPages[tab]
+    h.Parent = parent or tabPages[tab]
     bnd(h, {BackgroundColor3 = "card"})
     Instance.new("UICorner", h).CornerRadius = UDim.new(0, 8)
 
@@ -549,7 +530,6 @@ local function mkSlider(tab, name, mn, mx, def, cb)
     bnd(fl, {BackgroundColor3 = "accent"})
     Instance.new("UICorner", fl).CornerRadius = UDim.new(1, 0)
 
-    -- Knob
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0, 12, 0, 12)
     knob.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -593,7 +573,7 @@ local function mkSlider(tab, name, mn, mx, def, cb)
     return function() return val end
 end
 
-local function mkButton(tab, txt, cb)
+local function mkButton(tab, txt, cb, parent)
     local b = Instance.new("TextButton")
     b.LayoutOrder = nxt(tab)
     b.Size = UDim2.new(1, 0, 0, 32)
@@ -601,7 +581,7 @@ local function mkButton(tab, txt, cb)
     b.BorderSizePixel = 0
     b.ZIndex = 2
     b.AutoButtonColor = false
-    b.Parent = tabPages[tab]
+    b.Parent = parent or tabPages[tab]
     bnd(b, {BackgroundColor3 = "card"})
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
 
@@ -626,7 +606,7 @@ local function mkButton(tab, txt, cb)
     b.MouseLeave:Connect(function() if b then tw(b, {BackgroundColor3 = C.card}, 0.12) end end)
 end
 
-local function mkInfo(tab, fn)
+local function mkInfo(tab, fn, parent)
     local l = Instance.new("TextLabel")
     l.LayoutOrder = nxt(tab)
     l.Size = UDim2.new(1, 0, 0, 16)
@@ -635,12 +615,52 @@ local function mkInfo(tab, fn)
     l.TextSize = 11
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.ZIndex = 2
-    l.Parent = tabPages[tab]
+    l.Parent = parent or tabPages[tab]
     bnd(l, {TextColor3 = "sub"})
     l.Text = "  " .. fn()
     table.insert(threads, task.spawn(function()
         while getgenv().UUT_RUNNING do l.Text = "  " .. fn() task.wait(1) end
     end))
+end
+
+--------------------------------------------------------------
+-- SMART TP
+--------------------------------------------------------------
+local function smartTP(worldName)
+    local char = LP.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local pos
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and v:GetAttribute("isZoneBlock") then
+            local cur = v:GetAttribute("SortCurrency")
+            if cur and (cur == worldName or cur:lower() == worldName:lower()
+                or cur == worldName .. "Points" or cur == worldName:sub(1, 1):upper() .. worldName:sub(2) .. "Points") then
+                pos = v.Position
+                break
+            end
+        end
+    end
+
+    if not pos then
+        local other = workspace:FindFirstChild("Other")
+        if other then
+            for _, m in pairs(other:GetChildren()) do
+                if m:IsA("Model") and m.Name:lower() == worldName:lower() then
+                    local p = m.PrimaryPart or m:FindFirstChildWhichIsA("BasePart", true)
+                    if p then pos = p.Position + Vector3.new(0, 5, 0) break end
+                end
+            end
+        end
+    end
+
+    if pos then
+        pcall(function() LP:RequestStreamAroundAsync(pos, 10) end)
+        hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+    end
+    Remotes.ChangeWorld:FireServer(worldName)
 end
 
 --------------------------------------------------------------
@@ -655,7 +675,6 @@ Card.Parent = tabPages.Home
 bnd(Card, {BackgroundColor3 = "card"})
 Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 10)
 
--- Avatar with accent ring
 local AviRing = Instance.new("Frame")
 AviRing.Size = UDim2.new(0, 60, 0, 60)
 AviRing.Position = UDim2.new(0, 10, 0.5, -30)
@@ -735,28 +754,346 @@ mkInfo("Home", function()
 end)
 
 --------------------------------------------------------------
--- FARM TAB
+-- WORLD TAB (world list + per-world sub-pages)
 --------------------------------------------------------------
-mkLabel("Farm", "AUTO FARM")
+local worldList = {"Spawn", "Galaxy", "BlackHole", "AntiWorld", "Supernova", "Hecker", "Genesis", "Tower", "God", "Bigbang", "Void", "Cycle", "Space"}
 
-mkToggle("Farm", "Auto Click")
-loop("Auto Click", function() Remotes.Clicker:FireServer() task.wait(0.05) end)
+-- World list page (the main scrolling frame for World tab)
+local worldListPage = tabPages.World
 
-mkToggle("Farm", "Auto Buy All Upgrades")
-loop("Auto Buy All Upgrades", function()
-    for _, id in ipairs(allUpgradeIds) do
-        if not getgenv().UUT_RUNNING or not toggles["Auto Buy All Upgrades"] then break end
-        pcall(Remotes.BuyUpg.FireServer, Remotes.BuyUpg, id)
+-- Container for each world's sub-page (overlays the World tab content)
+local worldSubPages = {}
+
+-- Create sub-page frames (hidden by default, shown when a world is selected)
+for _, wName in ipairs(worldList) do
+    local sub = Instance.new("ScrollingFrame")
+    sub.Name = "Sub_" .. wName
+    sub.Size = UDim2.new(1, -16, 1, -12)
+    sub.Position = UDim2.new(0, 10, 0, 6)
+    sub.BackgroundTransparency = 1
+    sub.ScrollBarThickness = 3
+    sub.CanvasSize = UDim2.new(0, 0, 0, 0)
+    sub.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    sub.Visible = false
+    sub.BorderSizePixel = 0
+    sub.ZIndex = 3
+    sub.Parent = Content
+    bnd(sub, {ScrollBarImageColor3 = "accent"})
+
+    local lay = Instance.new("UIListLayout", sub)
+    lay.Padding = UDim.new(0, 5)
+    lay.SortOrder = Enum.SortOrder.LayoutOrder
+
+    local pad = Instance.new("UIPadding", sub)
+    pad.PaddingTop = UDim.new(0, 2)
+    pad.PaddingBottom = UDim.new(0, 12)
+    pad.PaddingRight = UDim.new(0, 6)
+
+    worldSubPages[wName] = sub
+end
+
+local function openWorldSub(wName)
+    activeWorld = wName
+    worldListPage.Visible = false
+    for n, sp in pairs(worldSubPages) do sp.Visible = (n == wName) end
+end
+
+local function closeWorldSub()
+    activeWorld = nil
+    for _, sp in pairs(worldSubPages) do sp.Visible = false end
+    worldListPage.Visible = true
+end
+
+-- Override switchTab to also close world sub-pages
+local origSwitchTab = switchTab
+switchTab = function(name)
+    -- Hide all world sub-pages when switching tabs
+    for _, sp in pairs(worldSubPages) do sp.Visible = false end
+    activeWorld = nil
+    activeTab = name
+    for n, p in pairs(tabPages) do p.Visible = (n == name) end
+    for n, b in pairs(tabBtns) do
+        if n == name then
+            tw(b, {BackgroundColor3 = C.tabActive, TextColor3 = C.bg}, 0.25)
+            twBack(b, {Size = UDim2.new(1, -6, 0, 42)}, 0.25)
+        else
+            tw(b, {BackgroundColor3 = C.tabBg, TextColor3 = C.sub, Size = UDim2.new(1, -10, 0, 40)}, 0.25)
+        end
     end
-    task.wait(0.5)
-end)
+end
 
-mkToggle("Farm", "Auto Daily Reward")
-loop("Auto Daily Reward", function()
-    local last = PD:FindFirstChild("LastTimeClaimed")
-    if last and (last.Value == 0 or os.time() - last.Value >= 43200) then Remotes.Daily:FireServer() end
-    task.wait(30)
-end)
+-- Re-bind tab buttons to updated switchTab
+for name, btn in pairs(tabBtns) do
+    btn.MouseButton1Click:Connect(function() switchTab(name) end)
+end
+
+-- Build the world list buttons
+mkLabel("World", "SELECT WORLD")
+
+for _, wName in ipairs(worldList) do
+    local b = Instance.new("TextButton")
+    b.LayoutOrder = nxt("World")
+    b.Size = UDim2.new(1, 0, 0, 36)
+    b.Text = ""
+    b.BorderSizePixel = 0
+    b.ZIndex = 2
+    b.AutoButtonColor = false
+    b.Parent = worldListPage
+    bnd(b, {BackgroundColor3 = "card"})
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+
+    local l = Instance.new("TextLabel")
+    l.Size = UDim2.new(1, -40, 1, 0)
+    l.Position = UDim2.new(0, 14, 0, 0)
+    l.BackgroundTransparency = 1
+    l.Text = wName
+    l.Font = Enum.Font.GothamBold
+    l.TextSize = 13
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.ZIndex = 3
+    l.Parent = b
+    bnd(l, {TextColor3 = "text"})
+
+    local arrow = Instance.new("TextLabel")
+    arrow.Size = UDim2.new(0, 20, 1, 0)
+    arrow.Position = UDim2.new(1, -28, 0, 0)
+    arrow.BackgroundTransparency = 1
+    arrow.Text = ">"
+    arrow.Font = Enum.Font.GothamBold
+    arrow.TextSize = 14
+    arrow.ZIndex = 3
+    arrow.Parent = b
+    bnd(arrow, {TextColor3 = "dim"})
+
+    b.MouseButton1Click:Connect(function()
+        tw(b, {BackgroundColor3 = C.accent}, 0.08)
+        task.delay(0.15, function() tw(b, {BackgroundColor3 = C.card}, 0.2) end)
+        openWorldSub(wName)
+    end)
+    b.MouseEnter:Connect(function() tw(b, {BackgroundColor3 = C.cardH}, 0.12) end)
+    b.MouseLeave:Connect(function() tw(b, {BackgroundColor3 = C.card}, 0.12) end)
+end
+
+-- Build each world's sub-page content
+for _, wName in ipairs(worldList) do
+    local sub = worldSubPages[wName]
+    local clickKey = "AutoClick_" .. wName
+    local buyKey = "AutoBuy_" .. wName
+
+    -- Back button
+    local back = Instance.new("TextButton")
+    back.LayoutOrder = 0
+    back.Size = UDim2.new(0, 70, 0, 28)
+    back.Text = ""
+    back.BorderSizePixel = 0
+    back.ZIndex = 3
+    back.AutoButtonColor = false
+    back.Parent = sub
+    bnd(back, {BackgroundColor3 = "card"})
+    Instance.new("UICorner", back).CornerRadius = UDim.new(0, 8)
+
+    local backLbl = Instance.new("TextLabel")
+    backLbl.Size = UDim2.new(1, 0, 1, 0)
+    backLbl.BackgroundTransparency = 1
+    backLbl.Text = "< Back"
+    backLbl.Font = Enum.Font.GothamBold
+    backLbl.TextSize = 11
+    backLbl.ZIndex = 4
+    backLbl.Parent = back
+    bnd(backLbl, {TextColor3 = "accent"})
+
+    back.MouseButton1Click:Connect(function() closeWorldSub() end)
+    back.MouseEnter:Connect(function() tw(back, {BackgroundColor3 = C.cardH}, 0.12) end)
+    back.MouseLeave:Connect(function() tw(back, {BackgroundColor3 = C.card}, 0.12) end)
+
+    -- World title
+    local title = Instance.new("TextLabel")
+    title.LayoutOrder = 1
+    title.Size = UDim2.new(1, 0, 0, 28)
+    title.BackgroundTransparency = 1
+    title.Text = "  " .. wName
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 16
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 3
+    title.Parent = sub
+    bnd(title, {TextColor3 = "text"})
+
+    -- Use nxt("World") for ordering within sub-pages
+    -- TP button
+    local tpBtn = Instance.new("TextButton")
+    tpBtn.LayoutOrder = 2
+    tpBtn.Size = UDim2.new(1, 0, 0, 34)
+    tpBtn.Text = ""
+    tpBtn.BorderSizePixel = 0
+    tpBtn.ZIndex = 3
+    tpBtn.AutoButtonColor = false
+    tpBtn.Parent = sub
+    bnd(tpBtn, {BackgroundColor3 = "accent"})
+    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 8)
+
+    local tpLbl = Instance.new("TextLabel")
+    tpLbl.Size = UDim2.new(1, 0, 1, 0)
+    tpLbl.BackgroundTransparency = 1
+    tpLbl.Text = "Teleport to " .. wName
+    tpLbl.Font = Enum.Font.GothamBold
+    tpLbl.TextSize = 13
+    tpLbl.ZIndex = 4
+    tpLbl.Parent = tpBtn
+    bnd(tpLbl, {TextColor3 = "bg"})
+
+    tpBtn.MouseButton1Click:Connect(function()
+        tw(tpBtn, {BackgroundColor3 = C.card}, 0.08)
+        task.delay(0.2, function() tw(tpBtn, {BackgroundColor3 = C.accent}, 0.2) end)
+        smartTP(wName)
+    end)
+
+    -- Spacer
+    local sp1 = Instance.new("Frame")
+    sp1.LayoutOrder = 3
+    sp1.Size = UDim2.new(1, 0, 0, 4)
+    sp1.BackgroundTransparency = 1
+    sp1.Parent = sub
+
+    local farmTitle = Instance.new("TextLabel")
+    farmTitle.LayoutOrder = 4
+    farmTitle.Size = UDim2.new(1, 0, 0, 20)
+    farmTitle.BackgroundTransparency = 1
+    farmTitle.Text = "  AUTO FARM"
+    farmTitle.Font = Enum.Font.GothamBold
+    farmTitle.TextSize = 11
+    farmTitle.TextXAlignment = Enum.TextXAlignment.Left
+    farmTitle.ZIndex = 3
+    farmTitle.Parent = sub
+    bnd(farmTitle, {TextColor3 = "accent"})
+
+    -- Auto Click toggle (per world)
+    toggles[clickKey] = false
+    local clickFrame = Instance.new("Frame")
+    clickFrame.LayoutOrder = 5
+    clickFrame.Size = UDim2.new(1, 0, 0, 36)
+    clickFrame.BorderSizePixel = 0
+    clickFrame.ZIndex = 3
+    clickFrame.Parent = sub
+    bnd(clickFrame, {BackgroundColor3 = "card"})
+    Instance.new("UICorner", clickFrame).CornerRadius = UDim.new(0, 8)
+
+    local clickLbl = Instance.new("TextLabel")
+    clickLbl.Size = UDim2.new(1, -56, 1, 0)
+    clickLbl.Position = UDim2.new(0, 14, 0, 0)
+    clickLbl.BackgroundTransparency = 1
+    clickLbl.Text = "Auto Click"
+    clickLbl.Font = Enum.Font.Gotham
+    clickLbl.TextSize = 13
+    clickLbl.TextXAlignment = Enum.TextXAlignment.Left
+    clickLbl.ZIndex = 4
+    clickLbl.Parent = clickFrame
+    bnd(clickLbl, {TextColor3 = "text"})
+
+    local clickTog = Instance.new("TextButton")
+    clickTog.Size = UDim2.new(0, 38, 0, 20)
+    clickTog.Position = UDim2.new(1, -48, 0.5, -10)
+    clickTog.Text = ""
+    clickTog.BorderSizePixel = 0
+    clickTog.ZIndex = 4
+    clickTog.AutoButtonColor = false
+    clickTog.Parent = clickFrame
+    Instance.new("UICorner", clickTog).CornerRadius = UDim.new(1, 0)
+
+    local clickKn = Instance.new("Frame")
+    clickKn.Size = UDim2.new(0, 16, 0, 16)
+    clickKn.Position = UDim2.new(0, 2, 0.5, -8)
+    clickKn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    clickKn.BorderSizePixel = 0
+    clickKn.ZIndex = 5
+    clickKn.Parent = clickTog
+    Instance.new("UICorner", clickKn).CornerRadius = UDim.new(1, 0)
+
+    local function clickRef()
+        local on = toggles[clickKey]
+        tw(clickTog, {BackgroundColor3 = on and C.on or C.off}, 0.2)
+        tw(clickKn, {Position = on and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}, 0.2)
+    end
+    clickRef()
+    table.insert(togRefresh, clickRef)
+
+    clickTog.MouseButton1Click:Connect(function()
+        toggles[clickKey] = not toggles[clickKey]
+        clickRef()
+    end)
+
+    clickFrame.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(clickFrame, {BackgroundColor3 = C.cardH}, 0.12) end end)
+    clickFrame.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(clickFrame, {BackgroundColor3 = C.card}, 0.12) end end)
+
+    -- Auto Buy toggle (per world)
+    toggles[buyKey] = false
+    local buyFrame = Instance.new("Frame")
+    buyFrame.LayoutOrder = 6
+    buyFrame.Size = UDim2.new(1, 0, 0, 36)
+    buyFrame.BorderSizePixel = 0
+    buyFrame.ZIndex = 3
+    buyFrame.Parent = sub
+    bnd(buyFrame, {BackgroundColor3 = "card"})
+    Instance.new("UICorner", buyFrame).CornerRadius = UDim.new(0, 8)
+
+    local buyLbl = Instance.new("TextLabel")
+    buyLbl.Size = UDim2.new(1, -56, 1, 0)
+    buyLbl.Position = UDim2.new(0, 14, 0, 0)
+    buyLbl.BackgroundTransparency = 1
+    buyLbl.Text = "Auto Buy Upgrades"
+    buyLbl.Font = Enum.Font.Gotham
+    buyLbl.TextSize = 13
+    buyLbl.TextXAlignment = Enum.TextXAlignment.Left
+    buyLbl.ZIndex = 4
+    buyLbl.Parent = buyFrame
+    bnd(buyLbl, {TextColor3 = "text"})
+
+    local buyTog = Instance.new("TextButton")
+    buyTog.Size = UDim2.new(0, 38, 0, 20)
+    buyTog.Position = UDim2.new(1, -48, 0.5, -10)
+    buyTog.Text = ""
+    buyTog.BorderSizePixel = 0
+    buyTog.ZIndex = 4
+    buyTog.AutoButtonColor = false
+    buyTog.Parent = buyFrame
+    Instance.new("UICorner", buyTog).CornerRadius = UDim.new(1, 0)
+
+    local buyKn = Instance.new("Frame")
+    buyKn.Size = UDim2.new(0, 16, 0, 16)
+    buyKn.Position = UDim2.new(0, 2, 0.5, -8)
+    buyKn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    buyKn.BorderSizePixel = 0
+    buyKn.ZIndex = 5
+    buyKn.Parent = buyTog
+    Instance.new("UICorner", buyKn).CornerRadius = UDim.new(1, 0)
+
+    local function buyRef()
+        local on = toggles[buyKey]
+        tw(buyTog, {BackgroundColor3 = on and C.on or C.off}, 0.2)
+        tw(buyKn, {Position = on and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}, 0.2)
+    end
+    buyRef()
+    table.insert(togRefresh, buyRef)
+
+    buyTog.MouseButton1Click:Connect(function()
+        toggles[buyKey] = not toggles[buyKey]
+        buyRef()
+    end)
+
+    buyFrame.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(buyFrame, {BackgroundColor3 = C.cardH}, 0.12) end end)
+    buyFrame.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(buyFrame, {BackgroundColor3 = C.card}, 0.12) end end)
+
+    -- Loops for this world
+    loop(clickKey, function() Remotes.Clicker:FireServer() task.wait(0.05) end)
+
+    loop(buyKey, function()
+        for _, id in ipairs(allUpgradeIds) do
+            if not getgenv().UUT_RUNNING or not toggles[buyKey] then break end
+            pcall(Remotes.BuyUpg.FireServer, Remotes.BuyUpg, id)
+        end
+        task.wait(0.5)
+    end)
+end
 
 --------------------------------------------------------------
 -- PRESTIGE TAB
@@ -826,53 +1163,19 @@ LP.CharacterAdded:Connect(function(char)
     end
 end)
 
-mkSpacer("Player", 4)
-mkLabel("Player", "TELEPORT")
-
-local function smartTP(worldName)
-    local char = LP.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local pos
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("BasePart") and v:GetAttribute("isZoneBlock") then
-            local cur = v:GetAttribute("SortCurrency")
-            if cur and (cur == worldName or cur:lower() == worldName:lower()
-                or cur == worldName .. "Points" or cur == worldName:sub(1, 1):upper() .. worldName:sub(2) .. "Points") then
-                pos = v.Position
-                break
-            end
-        end
-    end
-
-    if not pos then
-        local other = workspace:FindFirstChild("Other")
-        if other then
-            for _, m in pairs(other:GetChildren()) do
-                if m:IsA("Model") and m.Name:lower() == worldName:lower() then
-                    local p = m.PrimaryPart or m:FindFirstChildWhichIsA("BasePart", true)
-                    if p then pos = p.Position + Vector3.new(0, 5, 0) break end
-                end
-            end
-        end
-    end
-
-    if pos then
-        pcall(function() LP:RequestStreamAroundAsync(pos, 10) end)
-        hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
-    end
-    Remotes.ChangeWorld:FireServer(worldName)
-end
-
-for _, w in ipairs({"Spawn", "Galaxy", "BlackHole", "AntiWorld", "Supernova", "Hecker", "Genesis", "Tower", "God", "Bigbang", "Void", "Cycle", "Space"}) do
-    mkButton("Player", ">>  " .. w, function() smartTP(w) end)
-end
-
 --------------------------------------------------------------
 -- MISC TAB
 --------------------------------------------------------------
+mkLabel("Misc", "AUTO")
+
+mkToggle("Misc", "Auto Daily Reward")
+loop("Auto Daily Reward", function()
+    local last = PD:FindFirstChild("LastTimeClaimed")
+    if last and (last.Value == 0 or os.time() - last.Value >= 43200) then Remotes.Daily:FireServer() end
+    task.wait(30)
+end)
+
+mkSpacer("Misc", 4)
 mkLabel("Misc", "EFFECTS")
 
 mkToggle("Misc", "Sakura Petals", function(on)
@@ -895,7 +1198,32 @@ end)
 mkSpacer("Misc", 3)
 mkLabel("Misc", "CUSTOM BACKGROUND")
 
--- Background image ID input
+local function resolveImage(id)
+    local ok, objs = pcall(function() return game:GetObjects("rbxassetid://" .. id) end)
+    if ok and objs and objs[1] then
+        local obj = objs[1]
+        if obj:IsA("Decal") or obj:IsA("Texture") then
+            return obj.Texture
+        elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            return obj.Image
+        elseif obj:IsA("Shirt") then
+            return obj.ShirtTemplate
+        elseif obj:IsA("Pants") then
+            return obj.PantsTemplate
+        end
+    end
+    return "rbxassetid://" .. id
+end
+
+local function setBg(id)
+    task.spawn(function()
+        local img = resolveImage(id)
+        BgImage.Image = img
+        BgImage.ImageTransparency = 0
+        BgOverlay.BackgroundTransparency = 0.55
+    end)
+end
+
 do
     local inputH = Instance.new("Frame")
     inputH.LayoutOrder = nxt("Misc")
@@ -953,32 +1281,6 @@ end
 mkSpacer("Misc", 2)
 mkLabel("Misc", "PRESETS")
 
-local function resolveImage(id)
-    local ok, objs = pcall(function() return game:GetObjects("rbxassetid://" .. id) end)
-    if ok and objs and objs[1] then
-        local obj = objs[1]
-        if obj:IsA("Decal") or obj:IsA("Texture") then
-            return obj.Texture
-        elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-            return obj.Image
-        elseif obj:IsA("Shirt") then
-            return obj.ShirtTemplate
-        elseif obj:IsA("Pants") then
-            return obj.PantsTemplate
-        end
-    end
-    return "rbxassetid://" .. id
-end
-
-local function setBg(id)
-    task.spawn(function()
-        local img = resolveImage(id)
-        BgImage.Image = img
-        BgImage.ImageTransparency = 0
-        BgOverlay.BackgroundTransparency = 0.55
-    end)
-end
-
 local presets = {
     {id = "11176073582", name = "Preset 1"},
     {id = "1049060234",  name = "Preset 2"},
@@ -1015,7 +1317,6 @@ for _, theme in ipairs(ThemeList) do
     bnd(b, {BackgroundColor3 = "card"})
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
 
-    -- Color dots preview
     local dot1 = Instance.new("Frame")
     dot1.Size = UDim2.new(0, 18, 0, 18)
     dot1.Position = UDim2.new(0, 10, 0.5, -9)
@@ -1070,7 +1371,6 @@ for _, theme in ipairs(ThemeList) do
     b.MouseButton1Click:Connect(function()
         C = theme
         applyTheme()
-        -- Update checkmarks
         for _, child in pairs(tabPages.Misc:GetChildren()) do
             if child:IsA("TextButton") then
                 local ck = child:FindFirstChild("chk")
@@ -1083,11 +1383,9 @@ for _, theme in ipairs(ThemeList) do
                 end
             end
         end
-        -- Refresh transparency
         Main.BackgroundTransparency = uiAlpha
         TopBar.BackgroundTransparency = uiAlpha
         TabPanel.BackgroundTransparency = uiAlpha
-        -- Refresh active tab colors
         local prev = activeTab
         activeTab = nil
         switchTab(prev)
@@ -1118,9 +1416,8 @@ end)
 --------------------------------------------------------------
 switchTab("Home")
 
--- Open animation
 Main.Size = UDim2.new(0, 520, 0, 0)
 Main.BackgroundTransparency = 1
 tw(Main, {Size = UDim2.new(0, 520, 0, 380), BackgroundTransparency = 0}, 0.45)
 
-print("[UUT Hub] v5 loaded | RightShift to toggle")
+print("[UUT Hub] v6 loaded | RightShift to toggle")
