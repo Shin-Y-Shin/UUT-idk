@@ -280,6 +280,82 @@ VerLbl.TextXAlignment = Enum.TextXAlignment.Left
 VerLbl.Parent = TopBar
 bnd(VerLbl, {TextColor3 = "dim"})
 
+-- Minimize button
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 30, 0, 24)
+MinBtn.Position = UDim2.new(1, -72, 0.5, -12)
+MinBtn.Text = "—"
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 14
+MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinBtn.BorderSizePixel = 0
+MinBtn.ZIndex = 8
+MinBtn.AutoButtonColor = false
+MinBtn.Parent = TopBar
+bnd(MinBtn, {BackgroundColor3 = "card"})
+Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
+
+MinBtn.MouseEnter:Connect(function() tw(MinBtn, {BackgroundColor3 = C.cardH}, 0.12) end)
+MinBtn.MouseLeave:Connect(function() tw(MinBtn, {BackgroundColor3 = C.card}, 0.12) end)
+
+-- Popup notification (bottom right)
+local Popup = Instance.new("Frame")
+Popup.Size = UDim2.new(0, 200, 0, 36)
+Popup.Position = UDim2.new(1, -210, 1, -50)
+Popup.BackgroundTransparency = 1
+Popup.BorderSizePixel = 0
+Popup.ZIndex = 50
+Popup.Visible = false
+Popup.Parent = Gui
+bnd(Popup, {BackgroundColor3 = "card"})
+Instance.new("UICorner", Popup).CornerRadius = UDim.new(0, 10)
+
+local PopupLbl = Instance.new("TextLabel")
+PopupLbl.Size = UDim2.new(1, 0, 1, 0)
+PopupLbl.BackgroundTransparency = 1
+PopupLbl.Text = "RightShift to open"
+PopupLbl.Font = Enum.Font.GothamBold
+PopupLbl.TextSize = 13
+PopupLbl.ZIndex = 51
+PopupLbl.TextTransparency = 1
+PopupLbl.Parent = Popup
+bnd(PopupLbl, {TextColor3 = "accent"})
+
+local popupThread = nil
+local function showPopup()
+    if popupThread then pcall(task.cancel, popupThread) end
+    Popup.Visible = true
+    Popup.BackgroundTransparency = 1
+    PopupLbl.TextTransparency = 1
+    Popup.Position = UDim2.new(1, -210, 1, -20)
+    twBack(Popup, {BackgroundTransparency = 0.15, Position = UDim2.new(1, -210, 1, -50)}, 0.35)
+    tw(PopupLbl, {TextTransparency = 0}, 0.3)
+    popupThread = task.spawn(function()
+        task.wait(3)
+        tw(Popup, {BackgroundTransparency = 1, Position = UDim2.new(1, -210, 1, -20)}, 0.4)
+        tw(PopupLbl, {TextTransparency = 1}, 0.4)
+        task.wait(0.5)
+        Popup.Visible = false
+    end)
+end
+
+local function minimizeHub()
+    tw(Main, {Size = UDim2.new(0, 520, 0, 0), BackgroundTransparency = 1}, 0.3)
+    task.delay(0.3, function()
+        Main.Visible = false
+        showPopup()
+    end)
+end
+
+local function openHub()
+    Main.Visible = true
+    Main.Size = UDim2.new(0, 520, 0, 0)
+    Main.BackgroundTransparency = 1
+    tw(Main, {Size = UDim2.new(0, 520, 0, 380), BackgroundTransparency = 0}, 0.35)
+end
+
+MinBtn.MouseButton1Click:Connect(minimizeHub)
+
 local XBtn = Instance.new("TextButton")
 XBtn.Size = UDim2.new(0, 30, 0, 24)
 XBtn.Position = UDim2.new(1, -38, 0.5, -12)
@@ -1505,7 +1581,11 @@ end)
 UIS.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.RightShift then
-        Main.Visible = not Main.Visible
+        if Main.Visible then
+            minimizeHub()
+        else
+            openHub()
+        end
     end
 end)
 
