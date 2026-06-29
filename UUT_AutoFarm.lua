@@ -64,6 +64,35 @@ local worldDisplayCurrencies = {
     Space = "Cosmic Matter, Rocket Parts, Stars",
 }
 
+local worldPrestige = {
+    Spawn = {
+        {name = "Auto Prestige", fn = function() if PD.UnlockedPrestiges.Value then Remotes.Prestige:FireServer() end task.wait(1.5) end},
+        {name = "Auto Evil", fn = function() if PD.UnlockedEvil.Value then Remotes.Evil:FireServer() end task.wait(1.5) end},
+        {name = "Auto Loop", fn = function() Remotes.Loop:FireServer() task.wait(2) end},
+    },
+    BlackHole = {
+        {name = "Auto Dark Prestige", fn = function() local v = PD:FindFirstChild("UnlockedDarkPrestiges") if v and v.Value then Remotes.DarkPrestige:FireServer() end task.wait(1.5) end},
+        {name = "Auto Dark Evil", fn = function() local v = PD:FindFirstChild("UnlockedDarkEvil") if v and v.Value then Remotes.DarkEvil:FireServer() end task.wait(1.5) end},
+    },
+    AntiWorld = {
+        {name = "Auto Anti-Prestige", fn = function() local v = PD:FindFirstChild("UnlockedAntiPrestige") if v and v.Value then Remotes.AntiPrestige:FireServer() end task.wait(1.5) end},
+        {name = "Auto Anti-Evil", fn = function() local v = PD:FindFirstChild("UnlockedAntiEvil") if v and v.Value then Remotes.AntiEvil:FireServer() end task.wait(1.5) end},
+    },
+    Supernova = {
+        {name = "Auto Supernova", fn = function() if PD.UnlockedSupernova.Value or PD.Loop.Value >= 11 then Remotes.Supernova:FireServer() end task.wait(2) end},
+    },
+    Cycle = {
+        {name = "Auto Ascend", fn = function() local v = PD:FindFirstChild("UnlockedAscend") if v and v.Value then Remotes.Ascend:FireServer() end task.wait(2) end},
+        {name = "Auto Cycle", fn = function() local u = Upgrades:FindFirstChild("405") if u and u.Value >= 1 then Remotes.Cycle:FireServer() end task.wait(2) end},
+    },
+    Tower = {
+        {name = "Auto Tower Prestige", fn = function() local v = PD:FindFirstChild("UnlockedTowerPrestige") if v and v.Value then Remotes.TowerPrestige:FireServer() end task.wait(1.5) end},
+    },
+    Bigbang = {
+        {name = "Auto Beta", fn = function() local v = PD:FindFirstChild("UnlockedBeta") if v and v.Value then Remotes.Beta:FireServer() end task.wait(1.5) end},
+    },
+}
+
 -- Build per-world upgrade ID lists dynamically
 local worldUpgrades = {}
 local worldList = {"Spawn", "Galaxy", "BlackHole", "AntiWorld", "Supernova", "Hecker", "Genesis", "Tower", "God", "Bigbang", "Void", "Cycle", "Space"}
@@ -264,7 +293,7 @@ end)
 -- RIGHT TAB BAR
 --------------------------------------------------------------
 local TAB_W = 90
-local tabNames = {"Home", "World", "Prestige", "Player", "Misc"}
+local tabNames = {"Home", "World", "Player", "Misc"}
 
 local TabPanel = Instance.new("Frame")
 TabPanel.Size = UDim2.new(0, TAB_W, 1, -40)
@@ -1172,6 +1201,32 @@ for _, wName in ipairs(worldList) do
     buyFrame.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(buyFrame, {BackgroundColor3 = C.cardH}, 0.12) end end)
     buyFrame.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then tw(buyFrame, {BackgroundColor3 = C.card}, 0.12) end end)
 
+    -- Prestige toggles for this world
+    if worldPrestige[wName] then
+        local pSpacer = Instance.new("Frame")
+        pSpacer.LayoutOrder = 7
+        pSpacer.Size = UDim2.new(1, 0, 0, 4)
+        pSpacer.BackgroundTransparency = 1
+        pSpacer.Parent = sub
+
+        local pTitle = Instance.new("TextLabel")
+        pTitle.LayoutOrder = 8
+        pTitle.Size = UDim2.new(1, 0, 0, 20)
+        pTitle.BackgroundTransparency = 1
+        pTitle.Text = "  REBIRTH"
+        pTitle.Font = Enum.Font.GothamBold
+        pTitle.TextSize = 11
+        pTitle.TextXAlignment = Enum.TextXAlignment.Left
+        pTitle.ZIndex = 3
+        pTitle.Parent = sub
+        bnd(pTitle, {TextColor3 = "accent"})
+
+        for pi, pInfo in ipairs(worldPrestige[wName]) do
+            mkToggle("World", pInfo.name, nil, sub)
+            loop(pInfo.name, pInfo.fn)
+        end
+    end
+
     -- Loops for this world
     loop(clickKey, function() Remotes.Clicker:FireServer() task.wait(0.05) end)
 
@@ -1184,52 +1239,6 @@ for _, wName in ipairs(worldList) do
         task.wait(0.5)
     end)
 end
-
---------------------------------------------------------------
--- PRESTIGE TAB
---------------------------------------------------------------
-mkLabel("Prestige", "REBIRTH")
-mkToggle("Prestige", "Auto Prestige")
-loop("Auto Prestige", function() if PD.UnlockedPrestiges.Value then Remotes.Prestige:FireServer() end task.wait(1.5) end)
-
-mkToggle("Prestige", "Auto Evil")
-loop("Auto Evil", function() if PD.UnlockedEvil.Value then Remotes.Evil:FireServer() end task.wait(1.5) end)
-
-mkSpacer("Prestige", 3)
-mkLabel("Prestige", "DARK REBIRTH")
-mkToggle("Prestige", "Auto Dark Prestige")
-loop("Auto Dark Prestige", function() local v = PD:FindFirstChild("UnlockedDarkPrestiges") if v and v.Value then Remotes.DarkPrestige:FireServer() end task.wait(1.5) end)
-
-mkToggle("Prestige", "Auto Dark Evil")
-loop("Auto Dark Evil", function() local v = PD:FindFirstChild("UnlockedDarkEvil") if v and v.Value then Remotes.DarkEvil:FireServer() end task.wait(1.5) end)
-
-mkSpacer("Prestige", 3)
-mkLabel("Prestige", "ANTI REBIRTH")
-mkToggle("Prestige", "Auto Anti-Prestige")
-loop("Auto Anti-Prestige", function() local v = PD:FindFirstChild("UnlockedAntiPrestige") if v and v.Value then Remotes.AntiPrestige:FireServer() end task.wait(1.5) end)
-
-mkToggle("Prestige", "Auto Anti-Evil")
-loop("Auto Anti-Evil", function() local v = PD:FindFirstChild("UnlockedAntiEvil") if v and v.Value then Remotes.AntiEvil:FireServer() end task.wait(1.5) end)
-
-mkSpacer("Prestige", 3)
-mkLabel("Prestige", "PROGRESSION")
-mkToggle("Prestige", "Auto Loop")
-loop("Auto Loop", function() Remotes.Loop:FireServer() task.wait(2) end)
-
-mkToggle("Prestige", "Auto Supernova")
-loop("Auto Supernova", function() if PD.UnlockedSupernova.Value or PD.Loop.Value >= 11 then Remotes.Supernova:FireServer() end task.wait(2) end)
-
-mkToggle("Prestige", "Auto Ascend")
-loop("Auto Ascend", function() local v = PD:FindFirstChild("UnlockedAscend") if v and v.Value then Remotes.Ascend:FireServer() end task.wait(2) end)
-
-mkToggle("Prestige", "Auto Cycle")
-loop("Auto Cycle", function() local u = Upgrades:FindFirstChild("405") if u and u.Value >= 1 then Remotes.Cycle:FireServer() end task.wait(2) end)
-
-mkToggle("Prestige", "Auto Tower Prestige")
-loop("Auto Tower Prestige", function() local v = PD:FindFirstChild("UnlockedTowerPrestige") if v and v.Value then Remotes.TowerPrestige:FireServer() end task.wait(1.5) end)
-
-mkToggle("Prestige", "Auto Beta")
-loop("Auto Beta", function() local v = PD:FindFirstChild("UnlockedBeta") if v and v.Value then Remotes.Beta:FireServer() end task.wait(1.5) end)
 
 --------------------------------------------------------------
 -- PLAYER TAB
