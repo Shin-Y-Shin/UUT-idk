@@ -944,9 +944,7 @@ do
                 BgOverlay.BackgroundTransparency = 1
             else
                 id = id:gsub("rbxassetid://", "")
-                BgImage.Image = "rbxthumb://type=Asset&id=" .. id .. "&w=768&h=432"
-                BgImage.ImageTransparency = 0
-                BgOverlay.BackgroundTransparency = 0.55
+                setBg(id)
             end
         end
     end)
@@ -955,10 +953,30 @@ end
 mkSpacer("Misc", 2)
 mkLabel("Misc", "PRESETS")
 
+local function resolveImage(id)
+    local ok, objs = pcall(function() return game:GetObjects("rbxassetid://" .. id) end)
+    if ok and objs and objs[1] then
+        local obj = objs[1]
+        if obj:IsA("Decal") or obj:IsA("Texture") then
+            return obj.Texture
+        elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            return obj.Image
+        elseif obj:IsA("Shirt") then
+            return obj.ShirtTemplate
+        elseif obj:IsA("Pants") then
+            return obj.PantsTemplate
+        end
+    end
+    return "rbxassetid://" .. id
+end
+
 local function setBg(id)
-    BgImage.Image = "rbxthumb://type=Asset&id=" .. id .. "&w=768&h=432"
-    BgImage.ImageTransparency = 0
-    BgOverlay.BackgroundTransparency = 0.55
+    task.spawn(function()
+        local img = resolveImage(id)
+        BgImage.Image = img
+        BgImage.ImageTransparency = 0
+        BgOverlay.BackgroundTransparency = 0.55
+    end)
 end
 
 local presets = {
