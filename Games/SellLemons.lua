@@ -33,7 +33,8 @@ local Constant  = myTycoon:WaitForChild("Constant")
 local Locations = myTycoon:WaitForChild("Locations")
 
 local RS = game:GetService("ReplicatedStorage")
-local CashDropRedeem = RS.Core.RemoteRequest.CashDropService.Redeem
+local RemReq = RS:FindFirstChild("Core") and RS.Core:FindFirstChild("RemoteRequest")
+local CashDropRedeem = RemReq and RemReq:FindFirstChild("CashDropService") and RemReq.CashDropService:FindFirstChild("Redeem")
 
 local areaNames = {
     "Lemon Stand", "Lemon Trading", "Lemon Depot", "Lemon Labs",
@@ -676,7 +677,7 @@ end)
 mkToggle("Farm", "Auto Collect Drops")
 loop("Auto Collect Drops", function()
     pcall(function()
-        CashDropRedeem:InvokeServer()
+        if CashDropRedeem then CashDropRedeem:InvokeServer() end
         stats.drops = stats.drops + 1
     end)
     task.wait(0.5)
