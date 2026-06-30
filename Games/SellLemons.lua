@@ -1,6 +1,6 @@
 --[[
-    ShinyHub — Sell Lemons 🍋 v5
-    Feature-complete edition
+    ShinyHub — Sell Lemons 🍋 v6.0
+    Ultimate edition
 ]]
 
 if game.CoreGui:FindFirstChild("SLHub") then game.CoreGui:FindFirstChild("SLHub"):Destroy() end
@@ -61,6 +61,8 @@ local Themes = {
     {name="Rose",     dot=Color3.fromRGB(255,80,80),   accent=Color3.fromRGB(255,80,80),   bg=Color3.fromRGB(18,10,10),  card=Color3.fromRGB(30,18,18), cardH=Color3.fromRGB(44,26,26), sidebar=Color3.fromRGB(23,13,13), border=Color3.fromRGB(56,30,30), text=Color3.fromRGB(248,232,232), sub=Color3.fromRGB(160,110,110), dim=Color3.fromRGB(100,60,60), on=Color3.fromRGB(255,80,80), off=Color3.fromRGB(42,24,24), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(150,150,150), header=Color3.fromRGB(20,11,11), section=Color3.fromRGB(14,7,7)},
     {name="Frost",    dot=Color3.fromRGB(140,220,255), accent=Color3.fromRGB(140,220,255), bg=Color3.fromRGB(10,14,18),  card=Color3.fromRGB(18,24,30), cardH=Color3.fromRGB(28,38,48), sidebar=Color3.fromRGB(13,18,23), border=Color3.fromRGB(36,52,66), text=Color3.fromRGB(230,242,250), sub=Color3.fromRGB(120,150,170), dim=Color3.fromRGB(65,90,110), on=Color3.fromRGB(140,220,255), off=Color3.fromRGB(24,34,44), knobOn=Color3.fromRGB(16,22,28), knobOff=Color3.fromRGB(150,150,150), header=Color3.fromRGB(11,16,20), section=Color3.fromRGB(8,11,15)},
     {name="Gold",     dot=Color3.fromRGB(255,180,30),  accent=Color3.fromRGB(255,180,30),  bg=Color3.fromRGB(16,13,8),   card=Color3.fromRGB(26,22,14), cardH=Color3.fromRGB(40,34,20), sidebar=Color3.fromRGB(20,17,10), border=Color3.fromRGB(50,42,22), text=Color3.fromRGB(255,248,230), sub=Color3.fromRGB(170,148,100), dim=Color3.fromRGB(110,92,54), on=Color3.fromRGB(255,180,30), off=Color3.fromRGB(40,34,18), knobOn=Color3.fromRGB(30,25,8), knobOff=Color3.fromRGB(150,150,150), header=Color3.fromRGB(18,15,9), section=Color3.fromRGB(12,10,6)},
+    {name="Void",     dot=Color3.fromRGB(190,50,255),  accent=Color3.fromRGB(190,50,255),  bg=Color3.fromRGB(6,2,12),    card=Color3.fromRGB(14,8,24),  cardH=Color3.fromRGB(24,14,40), sidebar=Color3.fromRGB(10,4,18),  border=Color3.fromRGB(40,20,60),  text=Color3.fromRGB(240,230,255), sub=Color3.fromRGB(140,110,170), dim=Color3.fromRGB(80,55,110), on=Color3.fromRGB(190,50,255), off=Color3.fromRGB(28,16,42), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(150,150,150), header=Color3.fromRGB(8,3,14), section=Color3.fromRGB(4,1,9)},
+    {name="Blood",    dot=Color3.fromRGB(200,15,15),   accent=Color3.fromRGB(200,15,15),   bg=Color3.fromRGB(12,4,4),    card=Color3.fromRGB(22,10,10), cardH=Color3.fromRGB(36,16,16), sidebar=Color3.fromRGB(16,6,6),   border=Color3.fromRGB(50,18,18),  text=Color3.fromRGB(255,230,230), sub=Color3.fromRGB(160,90,90),   dim=Color3.fromRGB(100,45,45), on=Color3.fromRGB(200,15,15), off=Color3.fromRGB(36,14,14), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(150,150,150), header=Color3.fromRGB(14,5,5), section=Color3.fromRGB(9,2,2)},
 }
 
 local C = Themes[1]
@@ -103,7 +105,7 @@ pcall(function()
     local ls = LP:FindFirstChild("leaderstats")
     if ls and ls:FindFirstChild("Cash") then startCash = ls.Cash.Value end
 end)
-local stats = {clicks = 0, bought = 0, upgrades = 0, rebirths = 0, drops = 0, income = 0, evolves = 0}
+local stats = {clicks = 0, bought = 0, upgrades = 0, rebirths = 0, drops = 0, income = 0, evolves = 0, ascends = 0, fruits_tp = 0}
 
 local function loop(key, fn)
     table.insert(threads, task.spawn(function()
@@ -138,8 +140,17 @@ end))
 --------------------------------------------------------------
 local notifContainer
 
-local function showNotif(text)
+local notifColors = {
+    info = Color3.fromRGB(45, 140, 255),
+    success = Color3.fromRGB(50, 200, 80),
+    warning = Color3.fromRGB(255, 180, 30),
+    error = Color3.fromRGB(255, 70, 70),
+}
+
+local function showNotif(text, nType)
     if not notifContainer or not notifContainer.Parent then return end
+    local pipColor = nType and notifColors[nType] or nil
+
     local n = Instance.new("Frame")
     n.Size = UDim2.new(1, 0, 0, 0)
     n.BackgroundTransparency = 1
@@ -168,7 +179,11 @@ local function showNotif(text)
     pip.BorderSizePixel = 0
     pip.ZIndex = 21
     pip.Parent = bg
-    bnd(pip, {BackgroundColor3 = "accent"})
+    if pipColor then
+        pip.BackgroundColor3 = pipColor
+    else
+        bnd(pip, {BackgroundColor3 = "accent"})
+    end
     Instance.new("UICorner", pip).CornerRadius = UDim.new(1, 0)
 
     local l = Instance.new("TextLabel")
@@ -294,6 +309,57 @@ SubTitleLbl.ZIndex = 11
 SubTitleLbl.Parent = Header
 bnd(SubTitleLbl, {TextColor3 = "dim"})
 
+-- FPS / Ping display
+local FPSLabel = Instance.new("TextLabel")
+FPSLabel.Size = UDim2.new(0, 80, 1, 0)
+FPSLabel.Position = UDim2.new(1, -200, 0, 0)
+FPSLabel.BackgroundTransparency = 1
+FPSLabel.Text = "-- FPS | --ms"
+FPSLabel.Font = Enum.Font.GothamBold
+FPSLabel.TextSize = 9
+FPSLabel.TextXAlignment = Enum.TextXAlignment.Right
+FPSLabel.ZIndex = 12
+FPSLabel.Parent = Header
+bnd(FPSLabel, {TextColor3 = "dim"})
+
+table.insert(threads, task.spawn(function()
+    local lastTick = os.clock()
+    local frames = 0
+    RunS.RenderStepped:Connect(function()
+        frames = frames + 1
+    end)
+    while getgenv().SL_RUNNING do
+        task.wait(0.5)
+        local now = os.clock()
+        local dt = now - lastTick
+        local fps = math.floor(frames / dt)
+        frames = 0
+        lastTick = now
+        local ping = "?"
+        pcall(function()
+            local s = game:GetService("Stats")
+            local ns = s:FindFirstChild("Network")
+            if ns then
+                local sc = ns:FindFirstChild("ServerStatsItem")
+                if sc then
+                    ping = tostring(math.floor(sc:GetValue()))
+                end
+            end
+        end)
+        pcall(function()
+            ping = tostring(math.floor(LP:GetNetworkPing() * 1000))
+        end)
+        FPSLabel.Text = fps .. " FPS | " .. ping .. "ms"
+        if fps >= 50 then
+            FPSLabel.TextColor3 = C.dim
+        elseif fps >= 30 then
+            FPSLabel.TextColor3 = notifColors.warning
+        else
+            FPSLabel.TextColor3 = notifColors.error
+        end
+    end
+end))
+
 -- Active count badge
 local ActiveBadge = Instance.new("TextLabel")
 ActiveBadge.Size = UDim2.new(0, 46, 0, 16)
@@ -390,6 +456,7 @@ SideDiv.Parent = Sidebar
 bnd(SideDiv, {BackgroundColor3 = "border"})
 
 local tabNames = {"Home", "Farm", "Boost", "Teleport", "Stats", "Settings"}
+local tabIcons = {Home = "\xE2\x97\x8F", Farm = "\xE2\x9A\x99", Boost = "\xE2\x9A\xA1", Teleport = "\xE2\x86\x97", Stats = "\xE2\x96\xA0", Settings = "\xE2\x9C\xA6"}
 local tabBtns = {}
 local tabPages = {}
 local tabBadges = {}
@@ -416,9 +483,20 @@ for i, name in ipairs(tabNames) do
     btn.Parent = Sidebar
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
 
+    local icon = Instance.new("TextLabel")
+    icon.Size = UDim2.new(0, 14, 1, 0)
+    icon.Position = UDim2.new(0, 10, 0, 0)
+    icon.BackgroundTransparency = 1
+    icon.Text = tabIcons[name] or ""
+    icon.Font = Enum.Font.GothamBold
+    icon.TextSize = 10
+    icon.ZIndex = 7
+    icon.Parent = btn
+    bnd(icon, {TextColor3 = "dim"})
+
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -20, 1, 0)
-    lbl.Position = UDim2.new(0, 14, 0, 0)
+    lbl.Size = UDim2.new(1, -34, 1, 0)
+    lbl.Position = UDim2.new(0, 28, 0, 0)
     lbl.BackgroundTransparency = 1
     lbl.Text = name
     lbl.Font = Enum.Font.GothamBold
@@ -446,16 +524,18 @@ for i, name in ipairs(tabNames) do
         if activeTab ~= name then
             tw(btn, {BackgroundTransparency = 0.85, BackgroundColor3 = C.card}, 0.1)
             tw(lbl, {TextColor3 = C.sub}, 0.1)
+            tw(icon, {TextColor3 = C.sub}, 0.1)
         end
     end)
     btn.MouseLeave:Connect(function()
         if activeTab ~= name then
             tw(btn, {BackgroundTransparency = 1}, 0.12)
             tw(lbl, {TextColor3 = C.dim}, 0.12)
+            tw(icon, {TextColor3 = C.dim}, 0.12)
         end
     end)
 
-    tabBtns[name] = {btn = btn, lbl = lbl}
+    tabBtns[name] = {btn = btn, lbl = lbl, icon = icon}
     tabBadges[name] = badge
     tabToggles[name] = {}
 end
@@ -487,7 +567,7 @@ local VerLbl = Instance.new("TextLabel")
 VerLbl.Size = UDim2.new(1, -10, 0, 14)
 VerLbl.Position = UDim2.new(0, 5, 1, -32)
 VerLbl.BackgroundTransparency = 1
-VerLbl.Text = "v5.0"
+VerLbl.Text = "v6.0"
 VerLbl.Font = Enum.Font.GothamBold
 VerLbl.TextSize = 9
 VerLbl.ZIndex = 6
@@ -498,7 +578,7 @@ local KeyLbl = Instance.new("TextLabel")
 KeyLbl.Size = UDim2.new(1, -10, 0, 12)
 KeyLbl.Position = UDim2.new(0, 5, 1, -18)
 KeyLbl.BackgroundTransparency = 1
-KeyLbl.Text = "RShift to hide"
+KeyLbl.Text = "RShift hide | \\ panic"
 KeyLbl.Font = Enum.Font.Gotham
 KeyLbl.TextSize = 8
 KeyLbl.ZIndex = 6
@@ -587,18 +667,44 @@ for _, name in ipairs(tabNames) do
     tabPages[name] = page
 end
 
+local switching = false
 local function switchTab(name)
+    if switching then return end
     activeTab = name
-    PageTitle.Text = name
-    PageSub.Text = tabSubtitles[name] or ""
-    for n, p in pairs(tabPages) do p.Visible = (n == name) end
+
+    for n, p in pairs(tabPages) do
+        if n == name then
+            p.Visible = true
+            p.Position = UDim2.new(0, 10, 0, 52)
+            for _, child in p:GetChildren() do
+                if child:IsA("GuiObject") then
+                    child.BackgroundTransparency = child:GetAttribute("_origBT") or child.BackgroundTransparency
+                end
+            end
+            tw(p, {Position = UDim2.new(0, 10, 0, 42)}, 0.18)
+        else
+            p.Visible = false
+        end
+    end
+
+    tw(PageTitle, {TextTransparency = 1}, 0.08)
+    tw(PageSub, {TextTransparency = 1}, 0.08)
+    task.delay(0.08, function()
+        PageTitle.Text = name
+        PageSub.Text = tabSubtitles[name] or ""
+        tw(PageTitle, {TextTransparency = 0}, 0.15)
+        tw(PageSub, {TextTransparency = 0}, 0.15)
+    end)
+
     for n, t in pairs(tabBtns) do
         if n == name then
             tw(t.btn, {BackgroundTransparency = 0.88, BackgroundColor3 = C.card}, 0.2)
             tw(t.lbl, {TextColor3 = C.text}, 0.2)
+            if t.icon then tw(t.icon, {TextColor3 = C.accent}, 0.2) end
         else
             tw(t.btn, {BackgroundTransparency = 1}, 0.2)
             tw(t.lbl, {TextColor3 = C.dim}, 0.2)
+            if t.icon then tw(t.icon, {TextColor3 = C.dim}, 0.2) end
         end
     end
     local idx = table.find(tabNames, name) or 1
@@ -628,7 +734,13 @@ UIS.InputChanged:Connect(function(i)
     end
 end)
 
--- Keybind
+-- Keybind + keyboard shortcuts
+local tabKeyMap = {
+    [Enum.KeyCode.One] = "Home", [Enum.KeyCode.Two] = "Farm",
+    [Enum.KeyCode.Three] = "Boost", [Enum.KeyCode.Four] = "Teleport",
+    [Enum.KeyCode.Five] = "Stats", [Enum.KeyCode.Six] = "Settings",
+}
+
 UIS.InputBegan:Connect(function(inp, gp)
     if gp then return end
     if inp.KeyCode == Enum.KeyCode.RightShift then
@@ -642,6 +754,12 @@ UIS.InputBegan:Connect(function(inp, gp)
             Main.BackgroundTransparency = 1
             tw(Main, {BackgroundTransparency = 0, Size = UDim2.new(0, WIN_W, 0, WIN_H)}, 0.35, Enum.EasingStyle.Back)
         end
+    elseif inp.KeyCode == Enum.KeyCode.BackSlash then
+        for k, _ in pairs(toggles) do toggles[k] = false end
+        for _, fn in ipairs(togRefresh) do pcall(fn) end
+        showNotif("PANIC: All features disabled", "error")
+    elseif tabKeyMap[inp.KeyCode] and Main.Visible and not isMinimized then
+        switchTab(tabKeyMap[inp.KeyCode])
     end
 end)
 
@@ -854,6 +972,117 @@ local function mkButton(tab, txt, cb, parent)
     end)
 end
 
+local function mkSlider(tab, label, min, max, default, step, onChange, parent)
+    local value = default
+    local h = Instance.new("Frame")
+    h.LayoutOrder = nxt(tab)
+    h.Size = UDim2.new(1, 0, 0, 38)
+    h.BorderSizePixel = 0
+    h.ZIndex = 2
+    h.Parent = parent or tabPages[tab]
+    bnd(h, {BackgroundColor3 = "card"})
+    Instance.new("UICorner", h).CornerRadius = UDim.new(0, 8)
+
+    local l = Instance.new("TextLabel")
+    l.Size = UDim2.new(0.5, -10, 0, 16)
+    l.Position = UDim2.new(0, 14, 0, 3)
+    l.BackgroundTransparency = 1
+    l.Text = label
+    l.Font = Enum.Font.GothamBold
+    l.TextSize = 10
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.ZIndex = 3
+    l.Parent = h
+    bnd(l, {TextColor3 = "sub"})
+
+    local valLbl = Instance.new("TextLabel")
+    valLbl.Size = UDim2.new(0.5, -10, 0, 16)
+    valLbl.Position = UDim2.new(0.5, 0, 0, 3)
+    valLbl.BackgroundTransparency = 1
+    valLbl.Text = tostring(value)
+    valLbl.Font = Enum.Font.GothamBold
+    valLbl.TextSize = 11
+    valLbl.TextXAlignment = Enum.TextXAlignment.Right
+    valLbl.ZIndex = 3
+    valLbl.Parent = h
+    bnd(valLbl, {TextColor3 = "text"})
+
+    local trackBg = Instance.new("Frame")
+    trackBg.Size = UDim2.new(1, -28, 0, 6)
+    trackBg.Position = UDim2.new(0, 14, 0, 24)
+    trackBg.BorderSizePixel = 0
+    trackBg.ZIndex = 3
+    trackBg.Parent = h
+    bnd(trackBg, {BackgroundColor3 = "off"})
+    Instance.new("UICorner", trackBg).CornerRadius = UDim.new(1, 0)
+
+    local fill = Instance.new("Frame")
+    local pct = (value - min) / (max - min)
+    fill.Size = UDim2.new(pct, 0, 1, 0)
+    fill.BorderSizePixel = 0
+    fill.ZIndex = 4
+    fill.Parent = trackBg
+    bnd(fill, {BackgroundColor3 = "accent"})
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 12, 0, 12)
+    knob.Position = UDim2.new(pct, -6, 0.5, -6)
+    knob.BorderSizePixel = 0
+    knob.ZIndex = 5
+    knob.Parent = trackBg
+    bnd(knob, {BackgroundColor3 = "text"})
+    Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+    local clickArea = Instance.new("TextButton")
+    clickArea.Size = UDim2.new(1, 0, 0, 18)
+    clickArea.Position = UDim2.new(0, 0, 0, 18)
+    clickArea.BackgroundTransparency = 1
+    clickArea.Text = ""
+    clickArea.ZIndex = 6
+    clickArea.AutoButtonColor = false
+    clickArea.Parent = h
+
+    local sliding = false
+    local function updateFromX(x)
+        local absPos = trackBg.AbsolutePosition.X
+        local absSize = trackBg.AbsoluteSize.X
+        local rel = math.clamp((x - absPos) / absSize, 0, 1)
+        local raw = min + rel * (max - min)
+        value = math.floor(raw / step + 0.5) * step
+        value = math.clamp(value, min, max)
+        local newPct = (value - min) / (max - min)
+        fill.Size = UDim2.new(newPct, 0, 1, 0)
+        knob.Position = UDim2.new(newPct, -6, 0.5, -6)
+        valLbl.Text = tostring(value)
+        if onChange then onChange(value) end
+    end
+
+    clickArea.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            sliding = true
+            updateFromX(i.Position.X)
+        end
+    end)
+    clickArea.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then sliding = false end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if sliding and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+            updateFromX(i.Position.X)
+        end
+    end)
+
+    h.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseMovement then tw(h, {BackgroundColor3 = C.cardH}, 0.08) end
+    end)
+    h.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseMovement then tw(h, {BackgroundColor3 = C.card}, 0.1) end
+    end)
+
+    return function() return value end
+end
+
 local function mkStatCard(tab, label, fn, parent)
     local h = Instance.new("Frame")
     h.LayoutOrder = nxt(tab)
@@ -1029,6 +1258,26 @@ mkDualStat("Home",
     end
 )
 
+mkSpacer("Home", 3)
+mkDualStat("Home",
+    "EVOLVES", function()
+        return tostring(stats.evolves)
+    end,
+    "ASCENDS", function()
+        return tostring(stats.ascends)
+    end
+)
+
+mkSpacer("Home", 3)
+mkDualStat("Home",
+    "CLOCK", function()
+        return os.date("%I:%M %p")
+    end,
+    "ITEMS BOUGHT", function()
+        return fmtNum(stats.bought)
+    end
+)
+
 mkSpacer("Home", 6)
 mkSection("Home", "Quick Actions")
 
@@ -1054,10 +1303,18 @@ mkButton("Home", "Enable Everything", function()
     showNotif("Everything enabled")
 end)
 
+mkButton("Home", "Enable All Mods", function()
+    for _, name in ipairs({"Speed Boost", "Infinite Jump", "Noclip", "Player ESP", "Fullbright"}) do
+        toggles[name] = true
+    end
+    for _, fn in ipairs(togRefresh) do pcall(fn) end
+    showNotif("All player mods enabled", "success")
+end)
+
 mkButton("Home", "Disable All", function()
     for k, _ in pairs(toggles) do toggles[k] = false end
     for _, fn in ipairs(togRefresh) do pcall(fn) end
-    showNotif("All features disabled")
+    showNotif("All features disabled", "warning")
 end)
 
 --------------------------------------------------------------
@@ -1088,6 +1345,29 @@ loop("Auto Buy Items", function()
         end
     end
     task.wait(0.3)
+end)
+
+mkButton("Farm", "Buy All Now (One Pass)", function()
+    local count = 0
+    for _, area in Purchases:GetChildren() do
+        local buttons = area:FindFirstChild("Buttons")
+        if buttons then
+            local function scan(folder)
+                for _, item in folder:GetChildren() do
+                    if item:IsA("Folder") then scan(item)
+                    elseif item:IsA("Model") and item:GetAttribute("Purchased") ~= true and item:GetAttribute("Enabled") == true then
+                        local rem = item:FindFirstChild("Purchase")
+                        if rem and rem:IsA("RemoteFunction") then
+                            pcall(function() rem:InvokeServer(false) end)
+                            count = count + 1
+                        end
+                    end
+                end
+            end
+            scan(buttons)
+        end
+    end
+    showNotif("Bought " .. count .. " items", "success")
 end)
 
 mkSpacer("Farm", 2)
@@ -1141,9 +1421,26 @@ mkSpacer("Farm", 2)
 mkSection("Farm", "Collection")
 
 mkToggle("Farm", "Auto Collect Fruit", "Clicks all lemon tree fruits")
+mkToggle("Farm", "TP to Trees", "Teleports to trees for faster collection")
+
 loop("Auto Collect Fruit", function()
     local trees = Constant:FindFirstChild("Trees")
     if not trees then task.wait(1) return end
+
+    if toggles["TP to Trees"] then
+        local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local firstTree = trees:GetChildren()[1]
+            if firstTree then
+                local treePart = firstTree:FindFirstChildWhichIsA("BasePart")
+                if treePart then
+                    hrp.CFrame = treePart.CFrame + Vector3.new(0, 5, 0)
+                    stats.fruits_tp = stats.fruits_tp + 1
+                end
+            end
+        end
+    end
+
     for _, tree in trees:GetChildren() do
         if not getgenv().SL_RUNNING or not toggles["Auto Collect Fruit"] then return end
         for _, fruit in tree:GetChildren() do
@@ -1175,6 +1472,39 @@ mkToggle("Farm", "Auto Phone Offer", "Accepts phone offers for bonuses")
 loop("Auto Phone Offer", function()
     pcall(function() Remotes.PhoneOffer:FireServer() end)
     task.wait(1.5)
+end)
+
+mkToggle("Farm", "Auto Fruit Service", "Uses ClickFruitService remote")
+loop("Auto Fruit Service", function()
+    local clickFruit = RemReq and RemReq:FindFirstChild("ClickFruitService") and RemReq.ClickFruitService:FindFirstChild("Clicked")
+    if clickFruit then
+        local trees = Constant:FindFirstChild("Trees")
+        if trees then
+            for _, tree in trees:GetChildren() do
+                if not getgenv().SL_RUNNING or not toggles["Auto Fruit Service"] then return end
+                for _, fruit in tree:GetChildren() do
+                    if fruit.Name == "Fruit" and fruit.Transparency < 1 then
+                        pcall(function() clickFruit:InvokeServer(fruit) end)
+                    end
+                end
+            end
+        end
+    end
+    task.wait(0.1)
+end)
+
+mkSpacer("Farm", 2)
+mkSection("Farm", "Misc")
+
+mkToggle("Farm", "Auto All Prompts", "Fires every ProximityPrompt in tycoon")
+loop("Auto All Prompts", function()
+    for _, desc in myTycoon:GetDescendants() do
+        if not getgenv().SL_RUNNING or not toggles["Auto All Prompts"] then return end
+        if desc:IsA("ProximityPrompt") then
+            pcall(fireproximityprompt, desc)
+        end
+    end
+    task.wait(0.3)
 end)
 
 mkSpacer("Farm", 2)
@@ -1233,7 +1563,8 @@ end)
 
 mkToggle("Boost", "Auto Ascend", "Ascends when available")
 loop("Auto Ascend", function()
-    pcall(function() Remotes.Ascend:InvokeServer() end)
+    local ok = pcall(function() Remotes.Ascend:InvokeServer() end)
+    if ok then stats.ascends = stats.ascends + 1 end
     task.wait(2)
 end)
 
@@ -1244,6 +1575,40 @@ mkToggle("Boost", "Auto Upgrade Power", "Upgrades power level")
 loop("Auto Upgrade Power", function()
     pcall(function() Remotes.UpgradePowerLevel:InvokeServer() end)
     task.wait(0.8)
+end)
+
+local getPowerSelect = mkSlider("Boost", "Power Level Select", 1, 50, 1, 1)
+mkButton("Boost", "Set Power Level", function()
+    local lvl = getPowerSelect()
+    pcall(function() Remotes.SelectPowerLevel:InvokeServer(lvl) end)
+    showNotif("Power level set to " .. lvl, "success")
+end)
+
+mkSpacer("Boost", 2)
+mkSection("Boost", "Auto Firing")
+
+mkToggle("Boost", "Auto Special Income", "Fires SpecialIncome remote")
+loop("Auto Special Income", function()
+    pcall(function() Remotes.SpecialIncome:FireServer() end)
+    task.wait(0.5)
+end)
+
+mkToggle("Boost", "Auto Void Events", "Fires VoidEventService remote")
+loop("Auto Void Events", function()
+    local voidRemote = RemReq and RemReq:FindFirstChild("VoidEventService") and RemReq.VoidEventService:FindFirstChild("Event")
+    if voidRemote then
+        pcall(function() voidRemote:FireServer() end)
+    end
+    task.wait(1)
+end)
+
+mkToggle("Boost", "Auto Minigame Race", "Starts minigame races")
+loop("Auto Minigame Race", function()
+    local raceStart = RemReq and RemReq:FindFirstChild("MinigameRaceService") and RemReq.MinigameRaceService:FindFirstChild("Start")
+    if raceStart then
+        pcall(function() raceStart:InvokeServer() end)
+    end
+    task.wait(5)
 end)
 
 mkSpacer("Boost", 2)
@@ -1369,6 +1734,32 @@ table.insert(threads, task.spawn(function()
     destroyWaypoints()
 end))
 
+mkToggle("Teleport", "Teleport Loop", "Cycles through all areas every 5s")
+table.insert(threads, task.spawn(function()
+    local loopIdx = 1
+    while getgenv().SL_RUNNING do
+        if toggles["Teleport Loop"] then
+            local locs = Locations:GetChildren()
+            if #locs > 0 then
+                loopIdx = ((loopIdx - 1) % #locs) + 1
+                local loc = locs[loopIdx]
+                if loc:IsA("BasePart") then
+                    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        hrp.CFrame = loc.CFrame + Vector3.new(0, 3, 0)
+                        local display = locationRenames[loc.Name] or loc.Name
+                        showNotif("Loop TP: " .. display, "info")
+                    end
+                end
+                loopIdx = loopIdx + 1
+            end
+            task.wait(5)
+        else
+            task.wait(0.3)
+        end
+    end
+end))
+
 mkSpacer("Teleport", 4)
 mkSection("Teleport", "Special")
 mkButton("Teleport", "TP to Spawn", function()
@@ -1389,6 +1780,25 @@ mkButton("Teleport", "TP to My Tycoon", function()
     if hrp and firstLoc and firstLoc:IsA("BasePart") then
         hrp.CFrame = firstLoc.CFrame + Vector3.new(0, 3, 0)
         showNotif("TP: My Tycoon")
+    end
+end)
+
+mkButton("Teleport", "TP to Random Player", function()
+    local others = {}
+    for _, p in Players:GetPlayers() do
+        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(others, p)
+        end
+    end
+    if #others > 0 then
+        local target = others[math.random(#others)]
+        local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+            showNotif("TP: " .. target.Name, "info")
+        end
+    else
+        showNotif("No other players!", "warning")
     end
 end)
 
@@ -1497,7 +1907,10 @@ mkDualStat("Stats",
 )
 mkSpacer("Stats", 3)
 
-mkStatCard("Stats", "DROPS COLLECTED", function() return fmtNum(stats.drops) end)
+mkDualStat("Stats",
+    "ASCENDS", function() return tostring(stats.ascends) end,
+    "DROPS COLLECTED", function() return fmtNum(stats.drops) end
+)
 mkSpacer("Stats", 3)
 
 mkStatCard("Stats", "TOTAL CASH EARNED", function()
@@ -1519,6 +1932,36 @@ mkSpacer("Stats", 3)
 
 mkStatCard("Stats", "SERVER PLAYERS", function()
     return tostring(#Players:GetPlayers()) .. " / " .. tostring(Players.MaxPlayers)
+end)
+
+mkSpacer("Stats", 3)
+mkStatCard("Stats", "FRUIT TPS", function()
+    return fmtNum(stats.fruits_tp)
+end)
+
+mkSpacer("Stats", 6)
+mkSection("Stats", "Export")
+
+mkButton("Stats", "Copy Stats to Clipboard", function()
+    local e = os.clock() - sessionStart
+    local timeStr = string.format("%dh %dm %ds", math.floor(e/3600), math.floor(e%3600/60), math.floor(e%60))
+    local lines = {
+        "=== ShinyHub Stats ===",
+        "Session: " .. timeStr,
+        "Cash: " .. fmtNum(getCash()),
+        "Cash/hr: " .. fmtNum(getCashPerHour()),
+        "Lemons Clicked: " .. fmtNum(stats.clicks),
+        "Items Bought: " .. fmtNum(stats.bought),
+        "Earner Upgrades: " .. fmtNum(stats.upgrades),
+        "Income Taps: " .. fmtNum(stats.income),
+        "Rebirths: " .. stats.rebirths,
+        "Evolves: " .. stats.evolves,
+        "Ascends: " .. stats.ascends,
+        "Drops: " .. fmtNum(stats.drops),
+        "==================",
+    }
+    pcall(function() setclipboard(table.concat(lines, "\n")) end)
+    showNotif("Stats copied to clipboard!", "success")
 end)
 
 mkSpacer("Stats", 3)
@@ -1580,6 +2023,14 @@ loop("Super Speed", function()
     task.wait(0.5)
 end)
 
+local getCustomSpeed = mkSlider("Settings", "Custom Speed", 16, 500, 16, 1)
+mkToggle("Settings", "Custom WalkSpeed", "Set your own speed")
+loop("Custom WalkSpeed", function()
+    local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+    if hum then hum.WalkSpeed = getCustomSpeed() end
+    task.wait(0.3)
+end)
+
 mkToggle("Settings", "Jump Boost", "JumpPower 120")
 loop("Jump Boost", function()
     local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
@@ -1610,6 +2061,8 @@ end))
 
 mkSpacer("Settings", 2)
 mkSection("Settings", "Exploits")
+
+local getFlySpeedVal = mkSlider("Settings", "Fly Speed", 10, 300, 60, 5)
 
 mkToggle("Settings", "Fly", "Press E to fly, Q to descend")
 local flySpeed = 60
@@ -1662,7 +2115,7 @@ table.insert(threads, task.spawn(function()
                 if UIS:IsKeyDown(Enum.KeyCode.E) then dir = dir + Vector3.new(0, 1, 0) end
                 if UIS:IsKeyDown(Enum.KeyCode.Q) then dir = dir - Vector3.new(0, 1, 0) end
                 if dir.Magnitude > 0 then dir = dir.Unit end
-                flyBody.Velocity = dir * flySpeed
+                flyBody.Velocity = dir * getFlySpeedVal()
                 flyGyro.CFrame = cam.CFrame
             end
         else
@@ -1723,6 +2176,96 @@ table.insert(togRefresh, function()
         espGuis = {}
     end
 end)
+
+mkSpacer("Settings", 2)
+mkSection("Settings", "Camera & World")
+
+local getFOV = mkSlider("Settings", "Field of View", 30, 120, 70, 1, function(v)
+    pcall(function() game.Workspace.CurrentCamera.FieldOfView = v end)
+end)
+
+mkToggle("Settings", "Custom FOV", "Use the FOV slider above")
+loop("Custom FOV", function()
+    pcall(function() game.Workspace.CurrentCamera.FieldOfView = getFOV() end)
+    task.wait(0.5)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Custom FOV"] then
+        pcall(function() game.Workspace.CurrentCamera.FieldOfView = 70 end)
+    end
+end)
+
+mkToggle("Settings", "Low Gravity", "Workspace gravity reduced to 50")
+local savedGravity = nil
+loop("Low Gravity", function()
+    if not savedGravity then savedGravity = game.Workspace.Gravity end
+    game.Workspace.Gravity = 50
+    task.wait(0.5)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Low Gravity"] and savedGravity then
+        game.Workspace.Gravity = savedGravity
+    end
+end)
+
+mkToggle("Settings", "Zero Gravity", "Workspace gravity set to 0")
+loop("Zero Gravity", function()
+    if not savedGravity then savedGravity = game.Workspace.Gravity end
+    game.Workspace.Gravity = 0
+    task.wait(0.5)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Zero Gravity"] and not toggles["Low Gravity"] and savedGravity then
+        game.Workspace.Gravity = savedGravity
+    end
+end)
+
+mkToggle("Settings", "Hide Character", "Makes you invisible locally")
+loop("Hide Character", function()
+    local char = LP.Character
+    if char then
+        for _, p in char:GetDescendants() do
+            if p:IsA("BasePart") or p:IsA("Decal") then
+                p.Transparency = 1
+            end
+        end
+    end
+    task.wait(0.5)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Hide Character"] then
+        local char = LP.Character
+        if char then
+            for _, p in char:GetDescendants() do
+                if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then
+                    p.Transparency = 0
+                elseif p:IsA("Decal") then
+                    p.Transparency = 0
+                end
+            end
+        end
+    end
+end)
+
+mkToggle("Settings", "Auto Respawn", "Respawns instantly on death")
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        if toggles["Auto Respawn"] then
+            local char = LP.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health <= 0 then
+                    LP:LoadCharacter()
+                    task.wait(1)
+                end
+            end
+        end
+        task.wait(0.3)
+    end
+end))
+
+mkSpacer("Settings", 2)
+mkSection("Settings", "Visuals")
 
 mkToggle("Settings", "Fullbright", "Removes darkness & fog")
 local savedLighting = nil
@@ -1859,6 +2402,69 @@ for _, theme in ipairs(Themes) do
     end)
 end
 
+mkSpacer("Settings", 4)
+mkSection("Settings", "Special")
+
+mkToggle("Settings", "Rainbow Mode", "Cycles accent color automatically")
+table.insert(threads, task.spawn(function()
+    local hue = 0
+    while getgenv().SL_RUNNING do
+        if toggles["Rainbow Mode"] then
+            hue = (hue + 0.005) % 1
+            local col = Color3.fromHSV(hue, 0.8, 1)
+            C.accent = col
+            C.on = col
+            C.dot = col
+            StatusDot.BackgroundColor3 = col
+            AccentLine.BackgroundColor3 = col
+            SideIndicator.BackgroundColor3 = col
+            ActiveBadge.TextColor3 = col
+            ActiveBadge.BackgroundColor3 = col
+            for _, fn in ipairs(togRefresh) do pcall(fn) end
+            task.wait(0.03)
+        else
+            task.wait(0.3)
+        end
+    end
+end))
+
+mkSpacer("Settings", 6)
+mkSection("Settings", "About")
+
+local creditsFrame = Instance.new("Frame")
+creditsFrame.LayoutOrder = nxt("Settings")
+creditsFrame.Size = UDim2.new(1, 0, 0, 60)
+creditsFrame.BorderSizePixel = 0
+creditsFrame.ZIndex = 2
+creditsFrame.Parent = tabPages.Settings
+bnd(creditsFrame, {BackgroundColor3 = "card"})
+Instance.new("UICorner", creditsFrame).CornerRadius = UDim.new(0, 8)
+
+local creditsTitle = Instance.new("TextLabel")
+creditsTitle.Size = UDim2.new(1, -20, 0, 16)
+creditsTitle.Position = UDim2.new(0, 14, 0, 6)
+creditsTitle.BackgroundTransparency = 1
+creditsTitle.Text = "ShinyHub v6.0 — Ultimate Edition"
+creditsTitle.Font = Enum.Font.GothamBlack
+creditsTitle.TextSize = 11
+creditsTitle.TextXAlignment = Enum.TextXAlignment.Left
+creditsTitle.ZIndex = 3
+creditsTitle.Parent = creditsFrame
+bnd(creditsTitle, {TextColor3 = "accent"})
+
+local creditsSub = Instance.new("TextLabel")
+creditsSub.Size = UDim2.new(1, -20, 0, 30)
+creditsSub.Position = UDim2.new(0, 14, 0, 24)
+creditsSub.BackgroundTransparency = 1
+creditsSub.Text = "Universal script hub for Roblox\nMade by ShinyHub Team"
+creditsSub.Font = Enum.Font.Gotham
+creditsSub.TextSize = 9
+creditsSub.TextXAlignment = Enum.TextXAlignment.Left
+creditsSub.TextWrapped = true
+creditsSub.ZIndex = 3
+creditsSub.Parent = creditsFrame
+bnd(creditsSub, {TextColor3 = "dim"})
+
 --------------------------------------------------------------
 -- CASH TRACKING (for accurate cash/hr)
 --------------------------------------------------------------
@@ -1892,6 +2498,7 @@ Strk.Transparency = 1
 for _, t in pairs(tabBtns) do
     t.lbl.TextTransparency = 1
     t.btn.BackgroundTransparency = 1
+    if t.icon then t.icon.TextTransparency = 1 end
 end
 SideIndicator.BackgroundTransparency = 1
 VerLbl.TextTransparency = 1
@@ -1909,6 +2516,7 @@ task.delay(0.05, function()
             task.delay((i - 1) * 0.06, function()
                 local t = tabBtns[name]
                 tw(t.lbl, {TextTransparency = 0}, 0.3)
+                if t.icon then tw(t.icon, {TextTransparency = 0}, 0.3) end
             end)
         end
         task.delay(0.4, function()
@@ -1927,11 +2535,14 @@ switchTab("Home")
 
 -- Startup notifications
 task.delay(1.2, function()
-    showNotif("ShinyHub v5 loaded")
-    task.delay(0.6, function()
-        showNotif("Anti-AFK active")
-        task.delay(0.6, function()
-            showNotif(countActive() .. " features ready")
+    showNotif("ShinyHub v6.0 loaded", "success")
+    task.delay(0.5, function()
+        showNotif("Anti-AFK active", "info")
+        task.delay(0.5, function()
+            showNotif("Keys: 1-6 tabs | \\ panic", "info")
+            task.delay(0.5, function()
+                showNotif(countActive() .. " features ready")
+            end)
         end)
     end)
 end)
