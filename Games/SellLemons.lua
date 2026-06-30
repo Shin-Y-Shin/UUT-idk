@@ -1331,6 +1331,24 @@ mkDualStat("Home",
 
 mkSpacer("Home", 3)
 
+mkDualStat("Home",
+    "CASH / MIN", function()
+        local cph = getCashPerHour()
+        if cph == 0 then
+            local elapsed = os.clock() - sessionStart
+            if elapsed < 5 then return "---" end
+            local earned = getCash() - startCash
+            return fmtNum(math.max(0, earned / elapsed * 60))
+        end
+        return fmtNum(cph / 60)
+    end,
+    "EARNED", function()
+        return fmtNum(math.max(0, getCash() - startCash))
+    end
+)
+
+mkSpacer("Home", 3)
+
 -- Game values row
 mkDualStat("Home",
     "REBIRTHS", function()
@@ -2107,6 +2125,55 @@ table.insert(togRefresh, function()
     if not toggles["Item ESP"] then
         for _, gui in ipairs(itemEspGuis) do pcall(function() gui:Destroy() end) end
         itemEspGuis = {}
+    end
+end)
+
+mkToggle("Teleport", "Item Highlights", "Glowing outlines on available items")
+local itemHighlights = {}
+
+local function updateItemHighlights()
+    for _, hl in ipairs(itemHighlights) do pcall(function() hl:Destroy() end) end
+    itemHighlights = {}
+    if not toggles["Item Highlights"] then return end
+    for _, area in Purchases:GetChildren() do
+        local buttons = area:FindFirstChild("Buttons")
+        if buttons then
+            local function scan(folder)
+                for _, item in folder:GetChildren() do
+                    if item:IsA("Folder") then scan(item)
+                    elseif item:IsA("Model") and item:GetAttribute("Purchased") ~= true then
+                        local enabled = item:GetAttribute("Enabled") == true
+                        pcall(function()
+                            local hl = Instance.new("Highlight")
+                            hl.Name = "SH_HL"
+                            hl.FillColor = enabled and Color3.fromRGB(50, 200, 80) or Color3.fromRGB(255, 70, 70)
+                            hl.OutlineColor = enabled and Color3.fromRGB(30, 150, 50) or Color3.fromRGB(180, 40, 40)
+                            hl.FillTransparency = 0.7
+                            hl.OutlineTransparency = 0.3
+                            hl.Adornee = item
+                            hl.Parent = game.CoreGui
+                            table.insert(itemHighlights, hl)
+                        end)
+                    end
+                end
+            end
+            scan(buttons)
+        end
+    end
+end
+
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        if toggles["Item Highlights"] then updateItemHighlights() end
+        task.wait(5)
+    end
+    for _, hl in ipairs(itemHighlights) do pcall(function() hl:Destroy() end) end
+end))
+
+table.insert(togRefresh, function()
+    if not toggles["Item Highlights"] then
+        for _, hl in ipairs(itemHighlights) do pcall(function() hl:Destroy() end) end
+        itemHighlights = {}
     end
 end)
 
@@ -3283,6 +3350,18 @@ local function getCashPerHour()
     local earned = newest.cash - oldest.cash
     return math.max(0, (earned / elapsed) * 3600)
 end
+
+--------------------------------------------------------------
+-- RESPAWN HANDLER (re-applies effects)
+--------------------------------------------------------------
+LP.CharacterAdded:Connect(function(char)
+    task.wait(1)
+    sparkleEffect = nil
+    fireEffect = nil
+    smokeEffect = nil
+    for _, fn in ipairs(togRefresh) do pcall(fn) end
+    showNotif("Respawned — effects reapplied", "info")
+end)
 
 --------------------------------------------------------------
 -- CHAT COMMANDS
