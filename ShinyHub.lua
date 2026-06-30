@@ -4,6 +4,7 @@
 ]]
 
 local REPO = "https://raw.githubusercontent.com/Shin-Y-Shin/UUT-idk/main/Games/"
+local BUST = "?v=" .. tostring(os.time())
 local TS = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LP = Players.LocalPlayer
@@ -121,7 +122,7 @@ local function showLoadScreen(gameName, callback)
 
     task.spawn(function()
         local ok, result = pcall(function()
-            return game:HttpGet(REPO .. gameData.file)
+            return game:HttpGet(REPO .. gameData.file .. BUST)
         end)
         if ok then
             scriptCode = result
