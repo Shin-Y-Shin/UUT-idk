@@ -1398,9 +1398,52 @@ mkButton("Home", "Disable All", function()
     showNotif("All features disabled", "warning")
 end)
 
+mkSpacer("Home", 6)
+mkSection("Home", "Presets")
+
+mkButton("Home", "AFK Mode", function()
+    for k, _ in pairs(toggles) do toggles[k] = false end
+    for _, name in ipairs({"Auto Buy Items", "Auto Click Income", "Auto Upgrade Earners", "Auto Collect Fruit", "Auto Collect Drops", "Auto Phone Offer", "Auto Toggle Conveyors", "Auto Rebirth", "Auto Evolve", "Auto Ascend", "Auto Upgrade Power", "Auto Special Income", "Auto All Prompts", "TP to Trees"}) do
+        toggles[name] = true
+    end
+    for _, fn in ipairs(togRefresh) do pcall(fn) end
+    showNotif("AFK Mode: All automation ON", "success")
+end)
+
+mkButton("Home", "Grind Mode", function()
+    for k, _ in pairs(toggles) do toggles[k] = false end
+    for _, name in ipairs({"Auto Buy Items", "Auto Click Income", "Auto Upgrade Earners", "Auto Collect Fruit", "Auto Collect Drops", "Auto Phone Offer", "Auto Toggle Conveyors", "Auto Rebirth", "Auto Evolve", "Auto Ascend", "Auto Upgrade Power", "Auto Special Income", "Auto All Prompts", "Auto Fruit Service", "Auto Click All", "TP to Trees", "Speed Boost", "Fullbright"}) do
+        toggles[name] = true
+    end
+    for _, fn in ipairs(togRefresh) do pcall(fn) end
+    showNotif("Grind Mode: MAX automation + speed", "success")
+end)
+
+mkButton("Home", "Stealth Mode", function()
+    for k, _ in pairs(toggles) do toggles[k] = false end
+    for _, name in ipairs({"Auto Buy Items", "Auto Collect Drops", "Auto Phone Offer", "Auto Rebirth"}) do
+        toggles[name] = true
+    end
+    for _, fn in ipairs(togRefresh) do pcall(fn) end
+    showNotif("Stealth Mode: Minimal automation", "info")
+end)
+
+mkButton("Home", "Explorer Mode", function()
+    for k, _ in pairs(toggles) do toggles[k] = false end
+    for _, name in ipairs({"Speed Boost", "Infinite Jump", "Noclip", "Fly", "Fullbright", "Player ESP", "Show Area Waypoints", "Item ESP"}) do
+        toggles[name] = true
+    end
+    for _, fn in ipairs(togRefresh) do pcall(fn) end
+    showNotif("Explorer Mode: Movement + ESP ON", "info")
+end)
+
 --------------------------------------------------------------
 -- FARM TAB
 --------------------------------------------------------------
+mkSection("Farm", "Farm Speed")
+local getFarmDelay = mkSlider("Farm", "Cycle Delay (ms)", 10, 500, 200, 10)
+
+mkSpacer("Farm", 2)
 mkSection("Farm", "Purchasing")
 
 mkToggle("Farm", "Auto Buy Items", "Buys all enabled & available items")
@@ -2236,6 +2279,47 @@ mkButton("Stats", "Copy Stats to Clipboard", function()
 end)
 
 mkSpacer("Stats", 3)
+mkSection("Stats", "Cash Leaderboard")
+
+local leaderLabel = Instance.new("TextLabel")
+leaderLabel.LayoutOrder = nxt("Stats")
+leaderLabel.Size = UDim2.new(1, 0, 0, 14)
+leaderLabel.BackgroundTransparency = 1
+leaderLabel.Font = Enum.Font.Gotham
+leaderLabel.TextSize = 10
+leaderLabel.TextXAlignment = Enum.TextXAlignment.Left
+leaderLabel.TextWrapped = true
+leaderLabel.AutomaticSize = Enum.AutomaticSize.Y
+leaderLabel.ZIndex = 2
+leaderLabel.RichText = true
+leaderLabel.Parent = tabPages.Stats
+bnd(leaderLabel, {TextColor3 = "sub"})
+
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        local entries = {}
+        for _, player in Players:GetPlayers() do
+            local ls = player:FindFirstChild("leaderstats")
+            local cash = ls and ls:FindFirstChild("Cash")
+            if cash then
+                table.insert(entries, {name = player.Name, cash = cash.Value, isMe = player == LP})
+            end
+        end
+        table.sort(entries, function(a, b) return a.cash > b.cash end)
+        local lines = {}
+        for i, e in ipairs(entries) do
+            local prefix = e.isMe and "<b>" or ""
+            local suffix = e.isMe and " (You)</b>" or ""
+            local medal = i == 1 and "1st" or (i == 2 and "2nd" or (i == 3 and "3rd" or i .. "th"))
+            table.insert(lines, "  " .. prefix .. medal .. " — " .. e.name .. ": " .. fmtNum(e.cash) .. suffix)
+        end
+        leaderLabel.Text = #lines > 0 and table.concat(lines, "\n") or "No players"
+        leaderLabel.Size = UDim2.new(1, 0, 0, math.max(14, #lines * 14))
+        task.wait(5)
+    end
+end))
+
+mkSpacer("Stats", 3)
 mkSection("Stats", "Tycoon Owners")
 
 -- Dynamic list of tycoon owners
@@ -2703,6 +2787,21 @@ mkButton("Settings", "Server Hop", function()
     end)
 end)
 
+mkToggle("Settings", "Auto Rejoin", "Rejoins server if kicked")
+table.insert(threads, task.spawn(function()
+    local GCE = game:GetService("GuiService")
+    pcall(function()
+        GCE.ErrorMessageChanged:Connect(function()
+            if toggles["Auto Rejoin"] then
+                task.wait(3)
+                pcall(function()
+                    game:GetService("TeleportService"):Teleport(game.PlaceId, LP)
+                end)
+            end
+        end)
+    end)
+end))
+
 mkSpacer("Settings", 6)
 mkSection("Settings", "Themes")
 
@@ -2849,10 +2948,25 @@ bnd(creditsSub, {TextColor3 = "dim"})
 -- CASH TRACKING (for accurate cash/hr)
 --------------------------------------------------------------
 local cashHistory = {}
+local lastMilestone = 0
+
+local milestones = {1e3, 5e3, 1e4, 5e4, 1e5, 2.5e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15}
+
 table.insert(threads, task.spawn(function()
+    lastMilestone = getCash()
     while getgenv().SL_RUNNING do
-        table.insert(cashHistory, {time = os.clock(), cash = getCash()})
+        local cash = getCash()
+        table.insert(cashHistory, {time = os.clock(), cash = cash})
         if #cashHistory > 120 then table.remove(cashHistory, 1) end
+
+        for _, m in ipairs(milestones) do
+            if cash >= m and lastMilestone < m then
+                showNotif("MILESTONE: " .. fmtNum(m) .. " cash!", "success")
+                lastMilestone = cash
+                break
+            end
+        end
+        lastMilestone = cash
         task.wait(30)
     end
 end))
