@@ -1,6 +1,5 @@
 --[[
     ShinyHub — Sell Lemons 🍋 v2
-    Clean horizontal-tab UI with hover effects & animations
 ]]
 
 if game.CoreGui:FindFirstChild("SLHub") then game.CoreGui:FindFirstChild("SLHub"):Destroy() end
@@ -13,7 +12,7 @@ local UIS     = game:GetService("UserInputService")
 local LP      = Players.LocalPlayer
 
 --------------------------------------------------------------
--- FIND PLAYER'S TYCOON
+-- TYCOON
 --------------------------------------------------------------
 local myTycoon
 for i = 1, 10 do
@@ -50,11 +49,11 @@ local locationRenames = {
 -- THEME
 --------------------------------------------------------------
 local Themes = {
-    {name="Lemon",    accent=Color3.fromRGB(255,210,40),  bg=Color3.fromRGB(15,14,10),  card=Color3.fromRGB(26,25,17), cardH=Color3.fromRGB(38,36,22), tabBg=Color3.fromRGB(20,19,13), tabActive=Color3.fromRGB(255,210,40), border=Color3.fromRGB(55,50,22), text=Color3.fromRGB(250,248,235), sub=Color3.fromRGB(160,155,110), dim=Color3.fromRGB(100,96,58), on=Color3.fromRGB(255,210,40), off=Color3.fromRGB(42,40,24), knobOn=Color3.fromRGB(25,23,8), knobOff=Color3.fromRGB(200,200,200)},
-    {name="Midnight", accent=Color3.fromRGB(130,80,255),  bg=Color3.fromRGB(12,12,20),  card=Color3.fromRGB(22,22,35), cardH=Color3.fromRGB(32,32,50), tabBg=Color3.fromRGB(16,16,26), tabActive=Color3.fromRGB(130,80,255), border=Color3.fromRGB(40,36,62), text=Color3.fromRGB(235,235,245), sub=Color3.fromRGB(130,130,160), dim=Color3.fromRGB(72,72,100), on=Color3.fromRGB(130,80,255), off=Color3.fromRGB(40,40,58), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(200,200,200)},
-    {name="Ocean",    accent=Color3.fromRGB(45,140,255),  bg=Color3.fromRGB(8,12,22),   card=Color3.fromRGB(16,24,40), cardH=Color3.fromRGB(26,36,56), tabBg=Color3.fromRGB(12,16,28), tabActive=Color3.fromRGB(45,140,255), border=Color3.fromRGB(30,48,78), text=Color3.fromRGB(225,235,250), sub=Color3.fromRGB(110,135,170), dim=Color3.fromRGB(58,82,115), on=Color3.fromRGB(45,140,255), off=Color3.fromRGB(26,38,56), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(200,200,200)},
-    {name="Lime",     accent=Color3.fromRGB(100,220,60),  bg=Color3.fromRGB(10,14,9),   card=Color3.fromRGB(20,28,16), cardH=Color3.fromRGB(30,42,24), tabBg=Color3.fromRGB(14,20,12), tabActive=Color3.fromRGB(100,220,60), border=Color3.fromRGB(38,58,28), text=Color3.fromRGB(240,250,235), sub=Color3.fromRGB(130,165,115), dim=Color3.fromRGB(75,105,58), on=Color3.fromRGB(100,220,60), off=Color3.fromRGB(30,44,22), knobOn=Color3.fromRGB(18,28,10), knobOff=Color3.fromRGB(200,200,200)},
-    {name="Sakura",   accent=Color3.fromRGB(240,120,170), bg=Color3.fromRGB(20,12,18),  card=Color3.fromRGB(36,24,32), cardH=Color3.fromRGB(50,34,44), tabBg=Color3.fromRGB(26,16,22), tabActive=Color3.fromRGB(240,120,170), border=Color3.fromRGB(70,44,58), text=Color3.fromRGB(250,235,242), sub=Color3.fromRGB(175,130,150), dim=Color3.fromRGB(110,78,96), on=Color3.fromRGB(240,120,170), off=Color3.fromRGB(50,34,42), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(200,200,200)},
+    {name="Lemon",    dot=Color3.fromRGB(255,210,40),  accent=Color3.fromRGB(255,210,40),  bg=Color3.fromRGB(18,17,12),  card=Color3.fromRGB(28,27,19), cardH=Color3.fromRGB(40,38,25), tabBg=Color3.fromRGB(22,21,15), border=Color3.fromRGB(50,46,22), text=Color3.fromRGB(245,243,230), sub=Color3.fromRGB(150,145,105), dim=Color3.fromRGB(90,86,52), on=Color3.fromRGB(255,210,40), off=Color3.fromRGB(40,38,24), knobOn=Color3.fromRGB(28,26,10), knobOff=Color3.fromRGB(180,180,180), accentDark=Color3.fromRGB(120,100,15)},
+    {name="Midnight", dot=Color3.fromRGB(130,80,255),  accent=Color3.fromRGB(130,80,255),  bg=Color3.fromRGB(14,14,22),  card=Color3.fromRGB(24,24,36), cardH=Color3.fromRGB(34,34,52), tabBg=Color3.fromRGB(18,18,28), border=Color3.fromRGB(38,36,58), text=Color3.fromRGB(235,235,245), sub=Color3.fromRGB(125,125,155), dim=Color3.fromRGB(68,68,95), on=Color3.fromRGB(130,80,255), off=Color3.fromRGB(38,38,55), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(180,180,180), accentDark=Color3.fromRGB(60,35,130)},
+    {name="Ocean",    dot=Color3.fromRGB(45,140,255),  accent=Color3.fromRGB(45,140,255),  bg=Color3.fromRGB(10,13,22),  card=Color3.fromRGB(18,24,38), cardH=Color3.fromRGB(28,36,55), tabBg=Color3.fromRGB(13,17,28), border=Color3.fromRGB(28,44,72), text=Color3.fromRGB(220,232,250), sub=Color3.fromRGB(105,130,165), dim=Color3.fromRGB(55,78,110), on=Color3.fromRGB(45,140,255), off=Color3.fromRGB(24,35,52), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(180,180,180), accentDark=Color3.fromRGB(20,65,130)},
+    {name="Lime",     dot=Color3.fromRGB(100,220,60),  accent=Color3.fromRGB(100,220,60),  bg=Color3.fromRGB(12,15,10),  card=Color3.fromRGB(22,28,18), cardH=Color3.fromRGB(32,42,26), tabBg=Color3.fromRGB(16,20,13), border=Color3.fromRGB(35,52,26), text=Color3.fromRGB(238,248,232), sub=Color3.fromRGB(125,160,110), dim=Color3.fromRGB(70,100,55), on=Color3.fromRGB(100,220,60), off=Color3.fromRGB(28,40,20), knobOn=Color3.fromRGB(20,30,12), knobOff=Color3.fromRGB(180,180,180), accentDark=Color3.fromRGB(45,105,25)},
+    {name="Sakura",   dot=Color3.fromRGB(240,120,170), accent=Color3.fromRGB(240,120,170), bg=Color3.fromRGB(20,14,18),  card=Color3.fromRGB(34,24,30), cardH=Color3.fromRGB(48,34,42), tabBg=Color3.fromRGB(26,18,22), border=Color3.fromRGB(62,42,52), text=Color3.fromRGB(250,235,242), sub=Color3.fromRGB(168,125,145), dim=Color3.fromRGB(105,74,90), on=Color3.fromRGB(240,120,170), off=Color3.fromRGB(46,32,40), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(180,180,180), accentDark=Color3.fromRGB(120,55,80)},
 }
 
 local C = Themes[1]
@@ -78,7 +77,7 @@ local function applyTheme()
         if b.o and b.o.Parent then
             local p = {}
             for prop, key in pairs(b.m) do p[prop] = C[key] end
-            tw(b.o, p, 0.45)
+            tw(b.o, p, 0.5)
         end
     end
     for _, fn in ipairs(togRefresh) do pcall(fn) end
@@ -101,7 +100,7 @@ local function loop(key, fn)
 end
 
 --------------------------------------------------------------
--- GUI
+-- GUI SHELL
 --------------------------------------------------------------
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "SLHub"
@@ -109,99 +108,125 @@ Gui.ResetOnSpawn = false
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Gui.Parent = game.CoreGui
 
--- Shadow behind main window
-local Shadow = Instance.new("ImageLabel")
-Shadow.Size = UDim2.new(0, 510, 0, 390)
-Shadow.Position = UDim2.new(0.5, -255, 0.5, -195)
-Shadow.BackgroundTransparency = 1
-Shadow.Image = "rbxassetid://6014261993"
-Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-Shadow.ImageTransparency = 0.5
-Shadow.ScaleType = Enum.ScaleType.Slice
-Shadow.SliceCenter = Rect.new(49, 49, 450, 450)
-Shadow.ZIndex = 0
-Shadow.Parent = Gui
-
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 470, 0, 350)
-Main.Position = UDim2.new(0.5, -235, 0.5, -175)
+Main.Size = UDim2.new(0, 460, 0, 340)
+Main.Position = UDim2.new(0.5, -230, 0.5, -170)
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
 Main.Parent = Gui
 bnd(Main, {BackgroundColor3 = "bg"})
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 14)
 
 local Strk = Instance.new("UIStroke")
-Strk.Thickness = 1
-Strk.Transparency = 0.5
+Strk.Thickness = 1.2
+Strk.Transparency = 0.55
 Strk.Parent = Main
 bnd(Strk, {Color = "border"})
 
 --------------------------------------------------------------
--- TITLE BAR
+-- TITLE BAR (rounded top)
 --------------------------------------------------------------
 local TitleBar = Instance.new("Frame")
-TitleBar.Size = UDim2.new(1, 0, 0, 38)
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
 TitleBar.BorderSizePixel = 0
 TitleBar.ZIndex = 10
 TitleBar.Parent = Main
 bnd(TitleBar, {BackgroundColor3 = "tabBg"})
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 14)
 
--- Accent line under title
-local AccentLine = Instance.new("Frame")
-AccentLine.Size = UDim2.new(1, 0, 0, 1)
-AccentLine.Position = UDim2.new(0, 0, 1, -1)
-AccentLine.BorderSizePixel = 0
-AccentLine.BackgroundTransparency = 0.7
-AccentLine.ZIndex = 10
-AccentLine.Parent = TitleBar
-bnd(AccentLine, {BackgroundColor3 = "accent"})
+-- Cover bottom rounded corners of title bar
+local TitleBarFill = Instance.new("Frame")
+TitleBarFill.Size = UDim2.new(1, 0, 0, 16)
+TitleBarFill.Position = UDim2.new(0, 0, 1, -16)
+TitleBarFill.BorderSizePixel = 0
+TitleBarFill.ZIndex = 10
+TitleBarFill.Parent = TitleBar
+bnd(TitleBarFill, {BackgroundColor3 = "tabBg"})
+
+-- Subtle accent glow line
+local GlowLine = Instance.new("Frame")
+GlowLine.Size = UDim2.new(0, 45, 0, 2)
+GlowLine.Position = UDim2.new(0, 16, 1, -1)
+GlowLine.BorderSizePixel = 0
+GlowLine.BackgroundTransparency = 0.3
+GlowLine.ZIndex = 11
+GlowLine.Parent = TitleBar
+bnd(GlowLine, {BackgroundColor3 = "accent"})
+Instance.new("UICorner", GlowLine).CornerRadius = UDim.new(1, 0)
+
+-- Status dot
+local StatusDot = Instance.new("Frame")
+StatusDot.Size = UDim2.new(0, 7, 0, 7)
+StatusDot.Position = UDim2.new(0, 16, 0.5, -3)
+StatusDot.BorderSizePixel = 0
+StatusDot.ZIndex = 12
+StatusDot.Parent = TitleBar
+StatusDot.BackgroundColor3 = Color3.fromRGB(80, 220, 90)
+Instance.new("UICorner", StatusDot).CornerRadius = UDim.new(1, 0)
+
+-- Pulse the dot
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        tw(StatusDot, {BackgroundTransparency = 0.5}, 0.8, Enum.EasingStyle.Sine)
+        task.wait(0.8)
+        tw(StatusDot, {BackgroundTransparency = 0}, 0.8, Enum.EasingStyle.Sine)
+        task.wait(0.8)
+    end
+end))
 
 local TitleLbl = Instance.new("TextLabel")
 TitleLbl.Size = UDim2.new(0, 200, 1, 0)
-TitleLbl.Position = UDim2.new(0, 16, 0, 0)
+TitleLbl.Position = UDim2.new(0, 30, 0, 0)
 TitleLbl.BackgroundTransparency = 1
-TitleLbl.Text = "\xF0\x9F\x8D\x8B  Sell Lemons"
+TitleLbl.Text = "Sell Lemons"
 TitleLbl.Font = Enum.Font.GothamBlack
 TitleLbl.TextSize = 14
 TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-TitleLbl.ZIndex = 11
+TitleLbl.ZIndex = 12
 TitleLbl.Parent = TitleBar
-bnd(TitleLbl, {TextColor3 = "accent"})
+bnd(TitleLbl, {TextColor3 = "text"})
+
+local VerBadge = Instance.new("Frame")
+VerBadge.Size = UDim2.new(0, 22, 0, 14)
+VerBadge.Position = UDim2.new(0, 128, 0.5, -7)
+VerBadge.BorderSizePixel = 0
+VerBadge.BackgroundTransparency = 0.7
+VerBadge.ZIndex = 12
+VerBadge.Parent = TitleBar
+bnd(VerBadge, {BackgroundColor3 = "accent"})
+Instance.new("UICorner", VerBadge).CornerRadius = UDim.new(0, 4)
 
 local VerLbl = Instance.new("TextLabel")
-VerLbl.Size = UDim2.new(0, 30, 0, 14)
-VerLbl.Position = UDim2.new(0, 152, 0.5, -7)
+VerLbl.Size = UDim2.new(1, 0, 1, 0)
 VerLbl.BackgroundTransparency = 1
 VerLbl.Text = "v2"
-VerLbl.Font = Enum.Font.Gotham
+VerLbl.Font = Enum.Font.GothamBold
 VerLbl.TextSize = 9
-VerLbl.ZIndex = 11
-VerLbl.TextXAlignment = Enum.TextXAlignment.Left
-VerLbl.Parent = TitleBar
-bnd(VerLbl, {TextColor3 = "dim"})
+VerLbl.ZIndex = 13
+VerLbl.Parent = VerBadge
+bnd(VerLbl, {TextColor3 = "accent"})
 
 -- Window buttons
-local function mkWinBtn(text, posX, color, hoverColor, cb)
+local function mkWinBtn(text, posX, defaultBg, hoverBg, cb)
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(0, 24, 0, 24)
-    b.Position = UDim2.new(1, posX, 0.5, -12)
+    b.Size = UDim2.new(0, 28, 0, 22)
+    b.Position = UDim2.new(1, posX, 0.5, -11)
     b.Text = text
     b.Font = Enum.Font.GothamBold
-    b.TextSize = text == "X" and 11 or 14
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.BackgroundColor3 = color
-    b.BackgroundTransparency = 0.2
+    b.TextSize = text == "X" and 10 or 13
+    b.TextColor3 = Color3.fromRGB(200, 200, 200)
+    b.BackgroundColor3 = defaultBg
+    b.BackgroundTransparency = 1
     b.BorderSizePixel = 0
     b.ZIndex = 12
     b.AutoButtonColor = false
     b.Parent = TitleBar
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
     b.MouseEnter:Connect(function()
-        tw(b, {BackgroundColor3 = hoverColor, BackgroundTransparency = 0, Size = UDim2.new(0, 26, 0, 26), Position = UDim2.new(1, posX - 1, 0.5, -13)}, 0.15)
+        tw(b, {BackgroundTransparency = 0, BackgroundColor3 = hoverBg, TextColor3 = Color3.fromRGB(255,255,255)}, 0.12)
     end)
     b.MouseLeave:Connect(function()
-        tw(b, {BackgroundColor3 = color, BackgroundTransparency = 0.2, Size = UDim2.new(0, 24, 0, 24), Position = UDim2.new(1, posX, 0.5, -12)}, 0.15)
+        tw(b, {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(200,200,200)}, 0.15)
     end)
     b.MouseButton1Click:Connect(cb)
     return b
@@ -209,21 +234,15 @@ end
 
 -- Popup
 local Popup = Instance.new("Frame")
-Popup.Size = UDim2.new(0, 185, 0, 32)
-Popup.Position = UDim2.new(1, -195, 1, -46)
+Popup.Size = UDim2.new(0, 180, 0, 32)
+Popup.Position = UDim2.new(1, -190, 1, -44)
 Popup.BackgroundTransparency = 1
 Popup.BorderSizePixel = 0
 Popup.ZIndex = 50
 Popup.Visible = false
 Popup.Parent = Gui
 bnd(Popup, {BackgroundColor3 = "card"})
-Instance.new("UICorner", Popup).CornerRadius = UDim.new(0, 12)
-
-local PopupStrk = Instance.new("UIStroke")
-PopupStrk.Thickness = 1
-PopupStrk.Transparency = 0.6
-PopupStrk.Parent = Popup
-bnd(PopupStrk, {Color = "accent"})
+Instance.new("UICorner", Popup).CornerRadius = UDim.new(0, 10)
 
 local PopupLbl = Instance.new("TextLabel")
 PopupLbl.Size = UDim2.new(1, 0, 1, 0)
@@ -242,12 +261,12 @@ local function showPopup()
     Popup.Visible = true
     Popup.BackgroundTransparency = 1
     PopupLbl.TextTransparency = 1
-    Popup.Position = UDim2.new(1, -195, 1, -16)
-    twBack(Popup, {BackgroundTransparency = 0.08, Position = UDim2.new(1, -195, 1, -46)}, 0.4)
+    Popup.Position = UDim2.new(1, -190, 1, -16)
+    twBack(Popup, {BackgroundTransparency = 0.06, Position = UDim2.new(1, -190, 1, -44)}, 0.4)
     tw(PopupLbl, {TextTransparency = 0}, 0.35)
     popT = task.spawn(function()
         task.wait(3)
-        tw(Popup, {BackgroundTransparency = 1, Position = UDim2.new(1, -195, 1, -16)}, 0.45)
+        tw(Popup, {BackgroundTransparency = 1, Position = UDim2.new(1, -190, 1, -16)}, 0.4)
         tw(PopupLbl, {TextTransparency = 1}, 0.4)
         task.wait(0.5)
         Popup.Visible = false
@@ -255,23 +274,19 @@ local function showPopup()
 end
 
 local function minimizeHub()
-    tw(Main, {Size = UDim2.new(0, 470, 0, 0), BackgroundTransparency = 1}, 0.3)
-    tw(Shadow, {ImageTransparency = 1}, 0.3)
-    task.delay(0.3, function() Main.Visible = false Shadow.Visible = false showPopup() end)
+    tw(Main, {Size = UDim2.new(0, 460, 0, 0), BackgroundTransparency = 1}, 0.3)
+    task.delay(0.3, function() Main.Visible = false showPopup() end)
 end
 
 local function openHub()
     Main.Visible = true
-    Shadow.Visible = true
-    Main.Size = UDim2.new(0, 470, 0, 0)
+    Main.Size = UDim2.new(0, 460, 0, 0)
     Main.BackgroundTransparency = 1
-    Shadow.ImageTransparency = 1
-    tw(Main, {Size = UDim2.new(0, 470, 0, 350), BackgroundTransparency = 0}, 0.4)
-    tw(Shadow, {ImageTransparency = 0.5}, 0.4)
+    tw(Main, {Size = UDim2.new(0, 460, 0, 340), BackgroundTransparency = 0}, 0.4, Enum.EasingStyle.Back)
 end
 
-mkWinBtn("\xE2\x80\x94", -58, C.card, C.cardH, minimizeHub)
-mkWinBtn("X", -28, Color3.fromRGB(180, 45, 50), Color3.fromRGB(220, 55, 60), function()
+mkWinBtn("\xE2\x80\x94", -62, C.card, C.cardH, minimizeHub)
+mkWinBtn("X", -30, C.card, Color3.fromRGB(200, 50, 55), function()
     getgenv().SL_RUNNING = false
     task.wait(0.15)
     for _, t in ipairs(threads) do pcall(task.cancel, t) end
@@ -279,33 +294,24 @@ mkWinBtn("X", -28, Color3.fromRGB(180, 45, 50), Color3.fromRGB(220, 55, 60), fun
 end)
 
 --------------------------------------------------------------
--- HORIZONTAL TAB BAR
+-- HORIZONTAL TABS
 --------------------------------------------------------------
-local TAB_H = 32
+local TAB_H = 30
 local tabNames = {"Overview", "Auto", "Rebirth", "Teleport", "Player"}
 
 local TabStrip = Instance.new("Frame")
 TabStrip.Size = UDim2.new(1, 0, 0, TAB_H)
-TabStrip.Position = UDim2.new(0, 0, 0, 38)
+TabStrip.Position = UDim2.new(0, 0, 0, 40)
 TabStrip.BorderSizePixel = 0
 TabStrip.ZIndex = 8
 TabStrip.Parent = Main
 bnd(TabStrip, {BackgroundColor3 = "bg"})
 
-local TabStripBorder = Instance.new("Frame")
-TabStripBorder.Size = UDim2.new(1, 0, 0, 1)
-TabStripBorder.Position = UDim2.new(0, 0, 1, -1)
-TabStripBorder.BorderSizePixel = 0
-TabStripBorder.BackgroundTransparency = 0.5
-TabStripBorder.ZIndex = 8
-TabStripBorder.Parent = TabStrip
-bnd(TabStripBorder, {BackgroundColor3 = "border"})
-
--- Sliding indicator pill
+-- Indicator
 local tabW = 1 / #tabNames
 local Indicator = Instance.new("Frame")
-Indicator.Size = UDim2.new(tabW, -20, 0, 3)
-Indicator.Position = UDim2.new(0, 10, 1, -3)
+Indicator.Size = UDim2.new(tabW, -24, 0, 2)
+Indicator.Position = UDim2.new(0, 12, 1, -2)
 Indicator.BorderSizePixel = 0
 Indicator.ZIndex = 9
 Indicator.Parent = TabStrip
@@ -319,11 +325,11 @@ local activeTab = nil
 for i, name in ipairs(tabNames) do
     local btn = Instance.new("TextButton")
     btn.Name = name
-    btn.Size = UDim2.new(tabW, 0, 1, -2)
+    btn.Size = UDim2.new(tabW, 0, 1, 0)
     btn.Position = UDim2.new(tabW * (i - 1), 0, 0, 0)
     btn.Text = name
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 11
+    btn.TextSize = 10
     btn.BorderSizePixel = 0
     btn.BackgroundTransparency = 1
     btn.ZIndex = 9
@@ -332,10 +338,10 @@ for i, name in ipairs(tabNames) do
     bnd(btn, {TextColor3 = "dim"})
 
     btn.MouseEnter:Connect(function()
-        if activeTab ~= name then tw(btn, {TextColor3 = C.sub}, 0.12) end
+        if activeTab ~= name then tw(btn, {TextColor3 = C.sub}, 0.1) end
     end)
     btn.MouseLeave:Connect(function()
-        if activeTab ~= name then tw(btn, {TextColor3 = C.dim}, 0.12) end
+        if activeTab ~= name then tw(btn, {TextColor3 = C.dim}, 0.1) end
     end)
 
     tabBtns[name] = btn
@@ -345,8 +351,8 @@ end
 -- CONTENT
 --------------------------------------------------------------
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, 0, 1, -(38 + TAB_H))
-Content.Position = UDim2.new(0, 0, 0, 38 + TAB_H)
+Content.Size = UDim2.new(1, 0, 1, -(40 + TAB_H))
+Content.Position = UDim2.new(0, 0, 0, 40 + TAB_H)
 Content.BackgroundTransparency = 1
 Content.ClipsDescendants = true
 Content.ZIndex = 2
@@ -355,8 +361,8 @@ Content.Parent = Main
 for _, name in ipairs(tabNames) do
     local page = Instance.new("ScrollingFrame")
     page.Name = name
-    page.Size = UDim2.new(1, -24, 1, -8)
-    page.Position = UDim2.new(0, 14, 0, 4)
+    page.Size = UDim2.new(1, -22, 1, -6)
+    page.Position = UDim2.new(0, 12, 0, 3)
     page.BackgroundTransparency = 1
     page.ScrollBarThickness = 2
     page.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -365,7 +371,7 @@ for _, name in ipairs(tabNames) do
     page.BorderSizePixel = 0
     page.ZIndex = 2
     page.Parent = Content
-    bnd(page, {ScrollBarImageColor3 = "accent"})
+    bnd(page, {ScrollBarImageColor3 = "dim"})
 
     local lay = Instance.new("UIListLayout", page)
     lay.Padding = UDim.new(0, 4)
@@ -373,8 +379,8 @@ for _, name in ipairs(tabNames) do
 
     local pad = Instance.new("UIPadding", page)
     pad.PaddingTop = UDim.new(0, 4)
-    pad.PaddingBottom = UDim.new(0, 14)
-    pad.PaddingRight = UDim.new(0, 8)
+    pad.PaddingBottom = UDim.new(0, 16)
+    pad.PaddingRight = UDim.new(0, 6)
 
     tabPages[name] = page
 end
@@ -383,13 +389,13 @@ local function switchTab(name)
     activeTab = name
     for n, p in pairs(tabPages) do p.Visible = (n == name) end
     for n, b in pairs(tabBtns) do
-        tw(b, {TextColor3 = n == name and C.accent or C.dim}, 0.25)
+        tw(b, {TextColor3 = n == name and C.accent or C.dim}, 0.2)
     end
     local idx = table.find(tabNames, name) or 1
     tw(Indicator, {
-        Position = UDim2.new(tabW * (idx - 1), 10, 1, -3),
-        Size = UDim2.new(tabW, -20, 0, 3)
-    }, 0.3, Enum.EasingStyle.Back)
+        Position = UDim2.new(tabW * (idx - 1), 12, 1, -2),
+        Size = UDim2.new(tabW, -24, 0, 2)
+    }, 0.28, Enum.EasingStyle.Back)
 end
 
 for name, btn in pairs(tabBtns) do
@@ -411,26 +417,24 @@ end)
 UIS.InputChanged:Connect(function(i)
     if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
         local d = i.Position - dragSt
-        local newPos = UDim2.new(dragPos.X.Scale, dragPos.X.Offset + d.X, dragPos.Y.Scale, dragPos.Y.Offset + d.Y)
-        Main.Position = newPos
-        Shadow.Position = UDim2.new(0, newPos.X.Offset + Main.Size.X.Offset/2 - 255, 0, newPos.Y.Offset + Main.Size.Y.Offset/2 - 195)
+        Main.Position = UDim2.new(dragPos.X.Scale, dragPos.X.Offset + d.X, dragPos.Y.Scale, dragPos.Y.Offset + d.Y)
     end
 end)
 
--- Resize
+-- Resize handle
 local Rsz = Instance.new("TextButton")
 Rsz.Size = UDim2.new(0, 12, 0, 12)
 Rsz.Position = UDim2.new(1, -14, 1, -14)
 Rsz.Text = ""
-Rsz.BackgroundTransparency = 0.6
+Rsz.BackgroundTransparency = 0.7
 Rsz.BorderSizePixel = 0
 Rsz.ZIndex = 10
 Rsz.Parent = Main
 bnd(Rsz, {BackgroundColor3 = "dim"})
 Instance.new("UICorner", Rsz).CornerRadius = UDim.new(0, 3)
 
-Rsz.MouseEnter:Connect(function() tw(Rsz, {BackgroundTransparency = 0.2}, 0.12) end)
-Rsz.MouseLeave:Connect(function() tw(Rsz, {BackgroundTransparency = 0.6}, 0.12) end)
+Rsz.MouseEnter:Connect(function() tw(Rsz, {BackgroundTransparency = 0.3}, 0.1) end)
+Rsz.MouseLeave:Connect(function() tw(Rsz, {BackgroundTransparency = 0.7}, 0.1) end)
 
 local resizing, resSt, resSz
 Rsz.InputBegan:Connect(function(i)
@@ -444,7 +448,7 @@ end)
 UIS.InputChanged:Connect(function(i)
     if resizing and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
         local d = i.Position - resSt
-        Main.Size = UDim2.new(0, math.clamp(resSz.X.Offset + d.X, 380, 620), 0, math.clamp(resSz.Y.Offset + d.Y, 260, 520))
+        Main.Size = UDim2.new(0, math.clamp(resSz.X.Offset + d.X, 370, 600), 0, math.clamp(resSz.Y.Offset + d.Y, 260, 500))
     end
 end)
 
@@ -463,51 +467,66 @@ local ords = {}
 for _, n in ipairs(tabNames) do ords[n] = 0 end
 local function nxt(t) ords[t] = (ords[t] or 0) + 1 return ords[t] end
 
-local function mkLabel(tab, txt, parent)
+local function mkSection(tab, txt, parent)
+    local wrap = Instance.new("Frame")
+    wrap.LayoutOrder = nxt(tab)
+    wrap.Size = UDim2.new(1, 0, 0, 22)
+    wrap.BackgroundTransparency = 1
+    wrap.ZIndex = 2
+    wrap.Parent = parent or tabPages[tab]
+
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(0, 3, 0, 12)
+    bar.Position = UDim2.new(0, 2, 0.5, -6)
+    bar.BorderSizePixel = 0
+    bar.ZIndex = 2
+    bar.Parent = wrap
+    bnd(bar, {BackgroundColor3 = "accent"})
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+
     local l = Instance.new("TextLabel")
-    l.LayoutOrder = nxt(tab)
-    l.Size = UDim2.new(1, 0, 0, 20)
+    l.Size = UDim2.new(1, -14, 1, 0)
+    l.Position = UDim2.new(0, 12, 0, 0)
     l.BackgroundTransparency = 1
-    l.Text = "  " .. txt
+    l.Text = txt
     l.Font = Enum.Font.GothamBold
-    l.TextSize = 10
+    l.TextSize = 11
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.ZIndex = 2
-    l.Parent = parent or tabPages[tab]
-    bnd(l, {TextColor3 = "accent"})
+    l.Parent = wrap
+    bnd(l, {TextColor3 = "text"})
 end
 
 local function mkSpacer(tab, h, parent)
     local s = Instance.new("Frame")
     s.LayoutOrder = nxt(tab)
-    s.Size = UDim2.new(1, 0, 0, h or 3)
+    s.Size = UDim2.new(1, 0, 0, h or 2)
     s.BackgroundTransparency = 1
     s.ZIndex = 2
     s.Parent = parent or tabPages[tab]
-end
-
-local function mkDivider(tab, parent)
-    local d = Instance.new("Frame")
-    d.LayoutOrder = nxt(tab)
-    d.Size = UDim2.new(1, -20, 0, 1)
-    d.Position = UDim2.new(0, 10, 0, 0)
-    d.BackgroundTransparency = 0.6
-    d.BorderSizePixel = 0
-    d.ZIndex = 2
-    d.Parent = parent or tabPages[tab]
-    bnd(d, {BackgroundColor3 = "border"})
 end
 
 local function mkToggle(tab, name, cb, parent)
     toggles[name] = false
     local h = Instance.new("Frame")
     h.LayoutOrder = nxt(tab)
-    h.Size = UDim2.new(1, 0, 0, 34)
+    h.Size = UDim2.new(1, 0, 0, 32)
     h.BorderSizePixel = 0
     h.ZIndex = 2
     h.Parent = parent or tabPages[tab]
     bnd(h, {BackgroundColor3 = "card"})
     Instance.new("UICorner", h).CornerRadius = UDim.new(0, 10)
+
+    -- Left accent strip
+    local strip = Instance.new("Frame")
+    strip.Size = UDim2.new(0, 3, 0.6, 0)
+    strip.Position = UDim2.new(0, 0, 0.2, 0)
+    strip.BorderSizePixel = 0
+    strip.BackgroundTransparency = 0.7
+    strip.ZIndex = 3
+    strip.Parent = h
+    bnd(strip, {BackgroundColor3 = "accent"})
+    Instance.new("UICorner", strip).CornerRadius = UDim.new(1, 0)
 
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(1, -56, 1, 0)
@@ -515,15 +534,15 @@ local function mkToggle(tab, name, cb, parent)
     l.BackgroundTransparency = 1
     l.Text = name
     l.Font = Enum.Font.Gotham
-    l.TextSize = 12
+    l.TextSize = 11
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.ZIndex = 3
     l.Parent = h
-    bnd(l, {TextColor3 = "text"})
+    bnd(l, {TextColor3 = "sub"})
 
     local tr = Instance.new("TextButton")
-    tr.Size = UDim2.new(0, 36, 0, 18)
-    tr.Position = UDim2.new(1, -46, 0.5, -9)
+    tr.Size = UDim2.new(0, 34, 0, 16)
+    tr.Position = UDim2.new(1, -44, 0.5, -8)
     tr.Text = ""
     tr.BorderSizePixel = 0
     tr.ZIndex = 3
@@ -532,8 +551,8 @@ local function mkToggle(tab, name, cb, parent)
     Instance.new("UICorner", tr).CornerRadius = UDim.new(1, 0)
 
     local kn = Instance.new("Frame")
-    kn.Size = UDim2.new(0, 14, 0, 14)
-    kn.Position = UDim2.new(0, 2, 0.5, -7)
+    kn.Size = UDim2.new(0, 12, 0, 12)
+    kn.Position = UDim2.new(0, 2, 0.5, -6)
     kn.BackgroundColor3 = C.knobOff
     kn.BorderSizePixel = 0
     kn.ZIndex = 4
@@ -542,11 +561,13 @@ local function mkToggle(tab, name, cb, parent)
 
     local function ref()
         local on = toggles[name]
-        tw(tr, {BackgroundColor3 = on and C.on or C.off}, 0.22)
+        tw(tr, {BackgroundColor3 = on and C.on or C.off}, 0.2)
         tw(kn, {
-            Position = on and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7),
+            Position = on and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6),
             BackgroundColor3 = on and C.knobOn or C.knobOff
-        }, 0.22)
+        }, 0.2)
+        tw(strip, {BackgroundTransparency = on and 0 or 0.7}, 0.2)
+        tw(l, {TextColor3 = on and C.text or C.sub}, 0.2)
     end
     ref()
     table.insert(togRefresh, ref)
@@ -559,14 +580,12 @@ local function mkToggle(tab, name, cb, parent)
 
     h.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseMovement then
-            tw(h, {BackgroundColor3 = C.cardH}, 0.12)
-            tw(l, {TextColor3 = C.accent}, 0.12)
+            tw(h, {BackgroundColor3 = C.cardH}, 0.1)
         end
     end)
     h.InputEnded:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseMovement then
-            tw(h, {BackgroundColor3 = C.card}, 0.15)
-            tw(l, {TextColor3 = C.text}, 0.15)
+            tw(h, {BackgroundColor3 = C.card}, 0.12)
         end
     end)
 end
@@ -574,7 +593,7 @@ end
 local function mkButton(tab, txt, cb, parent)
     local b = Instance.new("TextButton")
     b.LayoutOrder = nxt(tab)
-    b.Size = UDim2.new(1, 0, 0, 30)
+    b.Size = UDim2.new(1, 0, 0, 28)
     b.Text = ""
     b.BorderSizePixel = 0
     b.ZIndex = 2
@@ -584,60 +603,99 @@ local function mkButton(tab, txt, cb, parent)
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
 
     local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(1, -16, 1, 0)
+    l.Size = UDim2.new(1, -30, 1, 0)
     l.Position = UDim2.new(0, 14, 0, 0)
     l.BackgroundTransparency = 1
     l.Text = txt
     l.Font = Enum.Font.Gotham
-    l.TextSize = 12
+    l.TextSize = 11
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.ZIndex = 3
     l.Parent = b
-    bnd(l, {TextColor3 = "text"})
-
-    -- Arrow indicator
-    local arrow = Instance.new("TextLabel")
-    arrow.Size = UDim2.new(0, 20, 1, 0)
-    arrow.Position = UDim2.new(1, -28, 0, 0)
-    arrow.BackgroundTransparency = 1
-    arrow.Text = "\xE2\x80\xBA"
-    arrow.Font = Enum.Font.GothamBold
-    arrow.TextSize = 16
-    arrow.TextTransparency = 0.6
-    arrow.ZIndex = 3
-    arrow.Parent = b
-    bnd(arrow, {TextColor3 = "sub"})
+    bnd(l, {TextColor3 = "sub"})
 
     b.MouseButton1Click:Connect(function()
-        tw(b, {BackgroundColor3 = C.accent}, 0.06)
-        tw(l, {TextColor3 = C.bg}, 0.06)
-        task.delay(0.12, function()
-            tw(b, {BackgroundColor3 = C.card}, 0.25)
-            tw(l, {TextColor3 = C.text}, 0.25)
+        tw(b, {BackgroundColor3 = C.accent}, 0.05)
+        tw(l, {TextColor3 = C.bg}, 0.05)
+        task.delay(0.1, function()
+            tw(b, {BackgroundColor3 = C.card}, 0.3)
+            tw(l, {TextColor3 = C.sub}, 0.3)
         end)
         if cb then cb() end
     end)
     b.MouseEnter:Connect(function()
-        tw(b, {BackgroundColor3 = C.cardH}, 0.12)
-        tw(arrow, {TextTransparency = 0, Position = UDim2.new(1, -24, 0, 0)}, 0.15)
+        tw(b, {BackgroundColor3 = C.cardH}, 0.1)
+        tw(l, {TextColor3 = C.text}, 0.1)
     end)
     b.MouseLeave:Connect(function()
-        tw(b, {BackgroundColor3 = C.card}, 0.15)
-        tw(arrow, {TextTransparency = 0.6, Position = UDim2.new(1, -28, 0, 0)}, 0.15)
+        tw(b, {BackgroundColor3 = C.card}, 0.12)
+        tw(l, {TextColor3 = C.sub}, 0.12)
+    end)
+end
+
+local function mkThemeBtn(tab, theme, parent)
+    local b = Instance.new("TextButton")
+    b.LayoutOrder = nxt(tab)
+    b.Size = UDim2.new(1, 0, 0, 26)
+    b.Text = ""
+    b.BorderSizePixel = 0
+    b.ZIndex = 2
+    b.AutoButtonColor = false
+    b.Parent = parent or tabPages[tab]
+    bnd(b, {BackgroundColor3 = "card"})
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+
+    -- Color preview dot
+    local dot = Instance.new("Frame")
+    dot.Size = UDim2.new(0, 10, 0, 10)
+    dot.Position = UDim2.new(0, 12, 0.5, -5)
+    dot.BorderSizePixel = 0
+    dot.BackgroundColor3 = theme.dot
+    dot.ZIndex = 3
+    dot.Parent = b
+    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+
+    local l = Instance.new("TextLabel")
+    l.Size = UDim2.new(1, -40, 1, 0)
+    l.Position = UDim2.new(0, 30, 0, 0)
+    l.BackgroundTransparency = 1
+    l.Text = theme.name
+    l.Font = Enum.Font.Gotham
+    l.TextSize = 11
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.ZIndex = 3
+    l.Parent = b
+    bnd(l, {TextColor3 = "sub"})
+
+    b.MouseButton1Click:Connect(function()
+        C = theme
+        applyTheme()
+        tw(dot, {Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(0, 10, 0.5, -7)}, 0.1)
+        task.delay(0.15, function()
+            tw(dot, {Size = UDim2.new(0, 10, 0, 10), Position = UDim2.new(0, 12, 0.5, -5)}, 0.2)
+        end)
+    end)
+    b.MouseEnter:Connect(function()
+        tw(b, {BackgroundColor3 = C.cardH}, 0.1)
+        tw(l, {TextColor3 = C.text}, 0.1)
+    end)
+    b.MouseLeave:Connect(function()
+        tw(b, {BackgroundColor3 = C.card}, 0.12)
+        tw(l, {TextColor3 = C.sub}, 0.12)
     end)
 end
 
 local function mkInfo(tab, fn, parent)
     local l = Instance.new("TextLabel")
     l.LayoutOrder = nxt(tab)
-    l.Size = UDim2.new(1, 0, 0, 16)
+    l.Size = UDim2.new(1, 0, 0, 14)
     l.BackgroundTransparency = 1
     l.Font = Enum.Font.Gotham
-    l.TextSize = 11
+    l.TextSize = 10
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.ZIndex = 2
     l.Parent = parent or tabPages[tab]
-    bnd(l, {TextColor3 = "sub"})
+    bnd(l, {TextColor3 = "dim"})
     l.Text = "    " .. fn()
     table.insert(threads, task.spawn(function()
         while getgenv().SL_RUNNING do l.Text = "    " .. fn() task.wait(1) end
@@ -656,9 +714,9 @@ local function smartTP(locName)
 end
 
 --------------------------------------------------------------
--- OVERVIEW TAB
+-- OVERVIEW
 --------------------------------------------------------------
-mkLabel("Overview", "Session")
+mkSection("Overview", "Session")
 mkInfo("Overview", function()
     local ls = LP:FindFirstChild("leaderstats")
     local cash = ls and ls:FindFirstChild("Cash")
@@ -671,10 +729,7 @@ mkInfo("Overview", function()
 end)
 
 mkSpacer("Overview", 4)
-mkDivider("Overview")
-mkSpacer("Overview", 4)
-
-mkLabel("Overview", "Stats")
+mkSection("Overview", "Stats")
 mkInfo("Overview", function()
     return string.format("Lemons: %d    Bought: %d", stats.clicks, stats.bought)
 end)
@@ -682,22 +737,16 @@ mkInfo("Overview", function()
     return string.format("Upgrades: %d    Rebirths: %d", stats.upgrades, stats.rebirths)
 end)
 
-mkSpacer("Overview", 4)
-mkDivider("Overview")
-mkSpacer("Overview", 4)
-
-mkLabel("Overview", "Theme")
+mkSpacer("Overview", 6)
+mkSection("Overview", "Theme")
 for _, theme in ipairs(Themes) do
-    mkButton("Overview", theme.name, function()
-        C = theme
-        applyTheme()
-    end)
+    mkThemeBtn("Overview", theme)
 end
 
 --------------------------------------------------------------
--- AUTO TAB
+-- AUTO
 --------------------------------------------------------------
-mkLabel("Auto", "Farming")
+mkSection("Auto", "Farming")
 mkToggle("Auto", "Auto Click Lemons")
 
 loop("Auto Click Lemons", function()
@@ -723,10 +772,7 @@ loop("Auto Click Lemons", function()
 end)
 
 mkSpacer("Auto", 4)
-mkDivider("Auto")
-mkSpacer("Auto", 4)
-
-mkLabel("Auto", "Tycoon")
+mkSection("Auto", "Tycoon")
 mkToggle("Auto", "Auto Buy Items")
 
 loop("Auto Buy Items", function()
@@ -755,10 +801,7 @@ loop("Auto Buy Items", function()
 end)
 
 mkSpacer("Auto", 4)
-mkDivider("Auto")
-mkSpacer("Auto", 4)
-
-mkLabel("Auto", "Earners")
+mkSection("Auto", "Earners")
 mkToggle("Auto", "Auto Upgrade Earners")
 
 loop("Auto Upgrade Earners", function()
@@ -784,9 +827,9 @@ loop("Auto Upgrade Earners", function()
 end)
 
 --------------------------------------------------------------
--- REBIRTH TAB
+-- REBIRTH
 --------------------------------------------------------------
-mkLabel("Rebirth", "Progression")
+mkSection("Rebirth", "Progression")
 mkToggle("Rebirth", "Auto Rebirth")
 loop("Auto Rebirth", function()
     local ok = pcall(function() Remotes.Rebirth:InvokeServer() end)
@@ -807,21 +850,15 @@ loop("Auto Ascend", function()
 end)
 
 mkSpacer("Rebirth", 4)
-mkDivider("Rebirth")
-mkSpacer("Rebirth", 4)
-
-mkLabel("Rebirth", "Power")
+mkSection("Rebirth", "Power")
 mkToggle("Rebirth", "Auto Upgrade Power")
 loop("Auto Upgrade Power", function()
     pcall(function() Remotes.UpgradePowerLevel:InvokeServer() end)
     task.wait(1)
 end)
 
-mkSpacer("Rebirth", 4)
-mkDivider("Rebirth")
-mkSpacer("Rebirth", 4)
-
-mkLabel("Rebirth", "Boosts")
+mkSpacer("Rebirth", 6)
+mkSection("Rebirth", "Boosts")
 mkButton("Rebirth", "Collect Time Cash", function()
     pcall(function() Remotes.UseTimeCash:InvokeServer() end)
 end)
@@ -830,9 +867,9 @@ mkButton("Rebirth", "Use Earner Boost", function()
 end)
 
 --------------------------------------------------------------
--- TELEPORT TAB
+-- TELEPORT
 --------------------------------------------------------------
-mkLabel("Teleport", "Tycoon Areas")
+mkSection("Teleport", "Tycoon Areas")
 
 local sortedLocs = {}
 for _, loc in Locations:GetChildren() do table.insert(sortedLocs, loc.Name) end
@@ -844,9 +881,9 @@ for _, locName in ipairs(sortedLocs) do
 end
 
 --------------------------------------------------------------
--- PLAYER TAB
+-- PLAYER
 --------------------------------------------------------------
-mkLabel("Player", "Movement")
+mkSection("Player", "Movement")
 mkToggle("Player", "Speed Boost")
 loop("Speed Boost", function()
     local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
@@ -876,10 +913,7 @@ mkButton("Player", "Toggle Infinite Jump", function()
 end)
 
 mkSpacer("Player", 4)
-mkDivider("Player")
-mkSpacer("Player", 4)
-
-mkLabel("Player", "Actions")
+mkSection("Player", "Actions")
 mkButton("Player", "Reset Character", function()
     local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
     if hum then hum.Health = 0 end
@@ -889,17 +923,15 @@ mkButton("Player", "Rejoin Server", function()
 end)
 
 --------------------------------------------------------------
--- ENTRANCE ANIMATION
+-- ENTRANCE
 --------------------------------------------------------------
 Main.BackgroundTransparency = 1
-Main.Size = UDim2.new(0, 470, 0, 0)
-Shadow.ImageTransparency = 1
+Main.Size = UDim2.new(0, 460, 0, 0)
 Strk.Transparency = 1
 
 task.delay(0.05, function()
-    tw(Main, {Size = UDim2.new(0, 470, 0, 350), BackgroundTransparency = 0}, 0.5, Enum.EasingStyle.Back)
-    tw(Shadow, {ImageTransparency = 0.5}, 0.5)
-    tw(Strk, {Transparency = 0.5}, 0.6)
+    tw(Main, {Size = UDim2.new(0, 460, 0, 340), BackgroundTransparency = 0}, 0.45, Enum.EasingStyle.Back)
+    tw(Strk, {Transparency = 0.55}, 0.5)
 end)
 
 switchTab("Overview")
