@@ -103,7 +103,7 @@ local sessionStart = os.clock()
 local startCash = 0
 pcall(function()
     local ls = LP:FindFirstChild("leaderstats")
-    if ls and ls:FindFirstChild("Cash") then startCash = tonumber(ls.Cash.Value) or 0 end
+    if ls and ls:FindFirstChild("Cash") then startCash = 0 end
 end)
 local stats = {clicks = 0, bought = 0, upgrades = 0, rebirths = 0, drops = 0, income = 0, evolves = 0, ascends = 0, fruits_tp = 0}
 local cashHistory = {}
@@ -657,8 +657,8 @@ table.insert(threads, task.spawn(function()
         local e = os.clock() - sessionStart
         local uptime = string.format("%dm %ds", math.floor(e / 60), math.floor(e % 60))
         local cashStr = ""
-        pcall(function() cashStr = fmtNum(getCash()) end)
-        StatusBarLbl.Text = n .. " active | " .. uptime .. " | " .. cashStr .. " cash"
+        pcall(function() cashStr = getCashDisplay() end)
+        StatusBarLbl.Text = n .. " active | " .. uptime .. " | " .. cashStr
         StatusBarRight.Text = "ShinyHub v6.0 | !help for cmds"
         task.wait(1)
     end
@@ -1280,10 +1280,44 @@ local function fmtNum(n)
     else return tostring(math.floor(n)) end
 end
 
+local cashSuffixes = {
+    ["K"]=1e3,["M"]=1e6,["B"]=1e9,["T"]=1e12,
+    ["Qa"]=1e15,["Qi"]=1e18,["Sx"]=1e21,["Sp"]=1e24,
+    ["Oc"]=1e27,["No"]=1e30,["Dc"]=1e33,["Udc"]=1e36,
+    ["Ddc"]=1e39,["Tdc"]=1e42,["Qtdc"]=1e45,["Qndc"]=1e48,
+    ["Sxdc"]=1e51,["Spdc"]=1e54,["Ocdc"]=1e57,["Nodc"]=1e60,
+    ["Vgn"]=1e63,["Uvg"]=1e66,["Dvg"]=1e69,["Tvg"]=1e72,
+    ["Qtvg"]=1e75,["Qnvg"]=1e78,["Sxvg"]=1e81,["Spvg"]=1e84,
+    ["Ocvg"]=1e87,["Novg"]=1e90,["Tgn"]=1e93,["Utg"]=1e96,
+    ["Dtg"]=1e99,["Ttg"]=1e102,["Qatg"]=1e105,["Qitg"]=1e108,
+}
+
+local function parseCashStr(s)
+    if type(s) ~= "string" then return tonumber(s) or 0 end
+    s = s:gsub("[%$,% \226\128\139]", "")
+    local num = tonumber(s)
+    if num then return num end
+    local n, suffix = s:match("^([%d%.]+)(%a+)$")
+    if n and suffix and cashSuffixes[suffix] then
+        return (tonumber(n) or 0) * cashSuffixes[suffix]
+    end
+    n = s:match("^([%d%.]+)")
+    return tonumber(n) or 0
+end
+
 local function getCash()
     local ls = LP:FindFirstChild("leaderstats")
     local cash = ls and ls:FindFirstChild("Cash")
-    return tonumber(cash and cash.Value) or 0
+    if not cash then return 0 end
+    return parseCashStr(cash.Value)
+end
+
+local function getCashDisplay()
+    local ls = LP:FindFirstChild("leaderstats")
+    local cash = ls and ls:FindFirstChild("Cash")
+    if not cash then return "$0" end
+    local s = tostring(cash.Value):gsub("\226\128\139", "")
+    return s
 end
 
 local function getVal(name)
@@ -1313,10 +1347,12 @@ local function smartTP(locName)
     end
 end
 
+startCash = getCash()
+
 --------------------------------------------------------------
 -- HOME TAB
 --------------------------------------------------------------
-mkStatCard("Home", "CASH", function() return fmtNum(getCash()) end)
+mkStatCard("Home", "CASH", function() return getCashDisplay() end)
 mkSpacer("Home", 3)
 
 mkDualStat("Home",
