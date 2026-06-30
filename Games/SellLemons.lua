@@ -1270,7 +1270,7 @@ local function mkDualStat(tab, label1, fn1, label2, fn2, parent)
     end
 end
 
-local fmtSuffixes = {"K","M","B","T","Qa","Qi","Sx","Sp","Oc","No","Dc","Udc","Ddc","Tdc","Qtdc","Qndc","Sxdc","Spdc","Ocdc","Nodc","Vgn","Uvg","Dvg","Tvg","Qtvg","Qnvg","Sxvg","Spvg","Ocvg","Novg","Tgn","Utg"}
+local fmtSuffixes = {"K","M","B","T","Qd","Qn","Sx","Sp","Oc","No","Dc","Ud","Dd","Td","Qtd","Qnd","Sxd","Spd","Ocd","Nod"}
 local function fmtNum(n)
     if type(n) ~= "number" then return tostring(n) end
     if n ~= n or n == math.huge then return "---" end
@@ -1284,17 +1284,20 @@ local function fmtNum(n)
     return tostring(math.floor(n))
 end
 
-local cashSuffixes = {
-    ["K"]=1e3,["M"]=1e6,["B"]=1e9,["T"]=1e12,
-    ["Qa"]=1e15,["Qi"]=1e18,["Sx"]=1e21,["Sp"]=1e24,
-    ["Oc"]=1e27,["No"]=1e30,["Dc"]=1e33,["Udc"]=1e36,
-    ["Ddc"]=1e39,["Tdc"]=1e42,["Qtdc"]=1e45,["Qndc"]=1e48,
-    ["Sxdc"]=1e51,["Spdc"]=1e54,["Ocdc"]=1e57,["Nodc"]=1e60,
-    ["Vgn"]=1e63,["Uvg"]=1e66,["Dvg"]=1e69,["Tvg"]=1e72,
-    ["Qtvg"]=1e75,["Qnvg"]=1e78,["Sxvg"]=1e81,["Spvg"]=1e84,
-    ["Ocvg"]=1e87,["Novg"]=1e90,["Tgn"]=1e93,["Utg"]=1e96,
-    ["Dtg"]=1e99,["Ttg"]=1e102,["Qatg"]=1e105,["Qitg"]=1e108,
-}
+local cashSuffixes = {}
+do
+    local base = {"K","M","B","T","Qd","Qn","Sx","Sp","Oc","No","Dc","Ud","Dd","Td","Qtd","Qnd","Sxd","Spd","Ocd","Nod"}
+    for i, s in ipairs(base) do cashSuffixes[s] = 10^(i*3) end
+    local roots = {[2]="Vg",[3]="Tg",[4]="Qdg",[5]="Qng",[6]="Sxg",[7]="Spg",[8]="Ocg",[9]="Nog",[10]="Ce"}
+    local prefixes = {[0]="",[1]="U",[2]="D",[3]="T",[4]="Qt",[5]="Qn",[6]="Sx",[7]="Sp",[8]="Oc",[9]="No"}
+    for ri, root in pairs(roots) do
+        for pi, prefix in pairs(prefixes) do
+            local idx = ri * 10 + pi
+            local abbr = prefix == "" and root or (prefix .. root:lower())
+            cashSuffixes[abbr] = 10^((idx+1)*3)
+        end
+    end
+end
 
 local function parseCashStr(s)
     if type(s) ~= "string" then return tonumber(s) or 0 end
@@ -1405,15 +1408,12 @@ mkDualStat("Home",
 
 mkSpacer("Home", 3)
 
--- Game values row
 mkDualStat("Home",
     "REBIRTHS", function()
-        local v = getVal("Rebirths") or getVal("Rebirth")
-        return v and tostring(v) or "---"
+        return tostring(stats.rebirths)
     end,
-    "POWER LVL", function()
-        local v = getVal("PowerLevel") or getVal("Power")
-        return v and tostring(v) or "---"
+    "UPGRADES", function()
+        return tostring(stats.upgrades)
     end
 )
 
@@ -2860,13 +2860,19 @@ UIS.JumpRequest:Connect(function()
 end)
 
 mkToggle("Settings", "Noclip", "Walk through walls")
+local noclipOriginals = {}
 table.insert(togRefresh, function()
-    if not toggles["Noclip"] and LP.Character then
+    if toggles["Noclip"] and LP.Character then
         for _, part in LP.Character:GetDescendants() do
-            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                part.CanCollide = true
+            if part:IsA("BasePart") then
+                if noclipOriginals[part] == nil then noclipOriginals[part] = part.CanCollide end
             end
         end
+    elseif not toggles["Noclip"] then
+        for part, orig in pairs(noclipOriginals) do
+            pcall(function() if part and part.Parent then part.CanCollide = orig end end)
+        end
+        noclipOriginals = {}
     end
 end)
 
@@ -3038,13 +3044,10 @@ table.insert(togRefresh, function()
             hum.WalkSpeed = defaultWalkSpeed
             hum.JumpPower = defaultJumpPower
         end
-        if LP.Character then
-            for _, part in LP.Character:GetDescendants() do
-                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                    part.CanCollide = true
-                end
-            end
+        for part, orig in pairs(noclipOriginals) do
+            pcall(function() if part and part.Parent then part.CanCollide = orig end end)
         end
+        noclipOriginals = {}
     end
 end)
 
@@ -3136,11 +3139,13 @@ table.insert(togRefresh, function()
 end)
 
 mkToggle("Settings", "Hide Character", "Makes you invisible locally")
+local hideOriginals = {}
 loop("Hide Character", function()
     local char = LP.Character
     if char then
         for _, p in char:GetDescendants() do
             if p:IsA("BasePart") or p:IsA("Decal") then
+                if hideOriginals[p] == nil then hideOriginals[p] = p.Transparency end
                 p.Transparency = 1
             end
         end
@@ -3149,16 +3154,10 @@ loop("Hide Character", function()
 end)
 table.insert(togRefresh, function()
     if not toggles["Hide Character"] then
-        local char = LP.Character
-        if char then
-            for _, p in char:GetDescendants() do
-                if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then
-                    p.Transparency = 0
-                elseif p:IsA("Decal") then
-                    p.Transparency = 0
-                end
-            end
+        for part, orig in pairs(hideOriginals) do
+            pcall(function() if part and part.Parent then part.Transparency = orig end end)
         end
+        hideOriginals = {}
     end
 end)
 
@@ -3582,7 +3581,7 @@ local creditsTitle = Instance.new("TextLabel")
 creditsTitle.Size = UDim2.new(1, -20, 0, 16)
 creditsTitle.Position = UDim2.new(0, 14, 0, 6)
 creditsTitle.BackgroundTransparency = 1
-creditsTitle.Text = "ShinyHub v6.1 — Ultimate Edition"
+creditsTitle.Text = "ShinyHub v6.1"
 creditsTitle.Font = Enum.Font.GothamBlack
 creditsTitle.TextSize = 11
 creditsTitle.TextXAlignment = Enum.TextXAlignment.Left
