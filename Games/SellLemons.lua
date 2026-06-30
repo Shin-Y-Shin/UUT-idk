@@ -1964,6 +1964,40 @@ mkButton("Boost", "Fire ALL Known Remotes", function()
     showNotif("Fired " .. count .. " remotes", "success")
 end)
 
+mkSpacer("Boost", 2)
+mkButton("Boost", "MEGA MAX (Buy+Upgrade+Power x100)", function()
+    showNotif("MEGA MAX running...", "warning")
+    task.spawn(function()
+        for _ = 1, 100 do
+            if not getgenv().SL_RUNNING then return end
+            for _, area in Purchases:GetChildren() do
+                local buttons = area:FindFirstChild("Buttons")
+                if buttons then
+                    for _, item in buttons:GetDescendants() do
+                        if item:IsA("Model") and item:GetAttribute("Purchased") ~= true and item:GetAttribute("Enabled") == true then
+                            local rem = item:FindFirstChild("Purchase")
+                            if rem then pcall(function() rem:InvokeServer(false) end) end
+                        end
+                    end
+                end
+                local m = area:FindFirstChild(area.Name)
+                if m and m:IsA("Model") then
+                    local part = m:FindFirstChild(area.Name)
+                    if part then
+                        local upg = part:FindFirstChild("Upgrade")
+                        if upg then pcall(function() upg:InvokeServer(1) end) end
+                    end
+                end
+            end
+            pcall(function() Remotes.UpgradePowerLevel:InvokeServer() end)
+            pcall(function() Remotes.Rebirth:InvokeServer() end)
+            pcall(function() Remotes.Evolve:InvokeServer() end)
+            task.wait(0.02)
+        end
+        showNotif("MEGA MAX complete!", "success")
+    end)
+end)
+
 --------------------------------------------------------------
 -- TELEPORT TAB
 --------------------------------------------------------------
@@ -2331,11 +2365,20 @@ local function refreshPlayerTP()
             bnd(b, {BackgroundColor3 = "card"})
             Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
 
+            local dist = ""
+            pcall(function()
+                local myHRP = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+                local pHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                if myHRP and pHRP then
+                    dist = " [" .. math.floor((myHRP.Position - pHRP.Position).Magnitude) .. "m]"
+                end
+            end)
+
             local l = Instance.new("TextLabel")
             l.Size = UDim2.new(1, -30, 1, 0)
             l.Position = UDim2.new(0, 14, 0, 0)
             l.BackgroundTransparency = 1
-            l.Text = player.Name
+            l.Text = player.Name .. dist
             l.Font = Enum.Font.Gotham
             l.TextSize = 11
             l.TextXAlignment = Enum.TextXAlignment.Left
@@ -3020,6 +3063,49 @@ end))
 
 mkSpacer("Settings", 2)
 mkSection("Settings", "Visuals")
+
+mkToggle("Settings", "XRay", "Makes walls transparent")
+local xrayOriginals = {}
+loop("XRay", function()
+    for _, part in game.Workspace:GetDescendants() do
+        if part:IsA("BasePart") and not part:IsDescendantOf(LP.Character or game) then
+            if not xrayOriginals[part] then
+                xrayOriginals[part] = part.Transparency
+            end
+            if part.Transparency < 0.7 then
+                part.Transparency = 0.7
+            end
+        end
+    end
+    task.wait(2)
+end)
+table.insert(togRefresh, function()
+    if not toggles["XRay"] then
+        for part, orig in pairs(xrayOriginals) do
+            pcall(function() part.Transparency = orig end)
+        end
+        xrayOriginals = {}
+    end
+end)
+
+mkToggle("Settings", "Night Mode", "Sets game to nighttime")
+loop("Night Mode", function()
+    local L = game:GetService("Lighting")
+    L.ClockTime = 0
+    L.Brightness = 0.5
+    L.Ambient = Color3.fromRGB(40, 40, 60)
+    task.wait(1)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Night Mode"] and savedLighting then
+        local L = game:GetService("Lighting")
+        pcall(function()
+            L.ClockTime = savedLighting.ClockTime
+            L.Brightness = savedLighting.Brightness
+            L.Ambient = savedLighting.Ambient
+        end)
+    end
+end)
 
 mkToggle("Settings", "Fullbright", "Removes darkness & fog")
 local savedLighting = nil
