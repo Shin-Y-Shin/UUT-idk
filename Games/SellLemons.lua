@@ -63,6 +63,8 @@ local Themes = {
     {name="Gold",     dot=Color3.fromRGB(255,180,30),  accent=Color3.fromRGB(255,180,30),  bg=Color3.fromRGB(16,13,8),   card=Color3.fromRGB(26,22,14), cardH=Color3.fromRGB(40,34,20), sidebar=Color3.fromRGB(20,17,10), border=Color3.fromRGB(50,42,22), text=Color3.fromRGB(255,248,230), sub=Color3.fromRGB(170,148,100), dim=Color3.fromRGB(110,92,54), on=Color3.fromRGB(255,180,30), off=Color3.fromRGB(40,34,18), knobOn=Color3.fromRGB(30,25,8), knobOff=Color3.fromRGB(150,150,150), header=Color3.fromRGB(18,15,9), section=Color3.fromRGB(12,10,6)},
     {name="Void",     dot=Color3.fromRGB(190,50,255),  accent=Color3.fromRGB(190,50,255),  bg=Color3.fromRGB(6,2,12),    card=Color3.fromRGB(14,8,24),  cardH=Color3.fromRGB(24,14,40), sidebar=Color3.fromRGB(10,4,18),  border=Color3.fromRGB(40,20,60),  text=Color3.fromRGB(240,230,255), sub=Color3.fromRGB(140,110,170), dim=Color3.fromRGB(80,55,110), on=Color3.fromRGB(190,50,255), off=Color3.fromRGB(28,16,42), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(150,150,150), header=Color3.fromRGB(8,3,14), section=Color3.fromRGB(4,1,9)},
     {name="Blood",    dot=Color3.fromRGB(200,15,15),   accent=Color3.fromRGB(200,15,15),   bg=Color3.fromRGB(12,4,4),    card=Color3.fromRGB(22,10,10), cardH=Color3.fromRGB(36,16,16), sidebar=Color3.fromRGB(16,6,6),   border=Color3.fromRGB(50,18,18),  text=Color3.fromRGB(255,230,230), sub=Color3.fromRGB(160,90,90),   dim=Color3.fromRGB(100,45,45), on=Color3.fromRGB(200,15,15), off=Color3.fromRGB(36,14,14), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(150,150,150), header=Color3.fromRGB(14,5,5), section=Color3.fromRGB(9,2,2)},
+    {name="Dark",     dot=Color3.fromRGB(90,90,90),    accent=Color3.fromRGB(90,90,90),    bg=Color3.fromRGB(22,22,22),  card=Color3.fromRGB(32,32,32), cardH=Color3.fromRGB(42,42,42), sidebar=Color3.fromRGB(26,26,26), border=Color3.fromRGB(50,50,50),  text=Color3.fromRGB(220,220,220), sub=Color3.fromRGB(150,150,150), dim=Color3.fromRGB(90,90,90),  on=Color3.fromRGB(255,255,255), off=Color3.fromRGB(45,45,45), knobOn=Color3.fromRGB(22,22,22), knobOff=Color3.fromRGB(120,120,120), header=Color3.fromRGB(18,18,18), section=Color3.fromRGB(14,14,14)},
+    {name="Light",    dot=Color3.fromRGB(50,50,50),    accent=Color3.fromRGB(50,120,220),  bg=Color3.fromRGB(240,240,245), card=Color3.fromRGB(255,255,255), cardH=Color3.fromRGB(235,238,245), sidebar=Color3.fromRGB(248,248,252), border=Color3.fromRGB(210,210,220), text=Color3.fromRGB(20,20,30), sub=Color3.fromRGB(80,80,100), dim=Color3.fromRGB(140,140,160), on=Color3.fromRGB(50,120,220), off=Color3.fromRGB(200,200,210), knobOn=Color3.fromRGB(255,255,255), knobOff=Color3.fromRGB(180,180,180), header=Color3.fromRGB(230,230,238), section=Color3.fromRGB(245,245,250)},
 }
 
 local C = Themes[1]
@@ -3563,6 +3565,103 @@ table.insert(togRefresh, function()
     else
         if smokeEffect then smokeEffect:Destroy() smokeEffect = nil end
     end
+end)
+
+mkSpacer("Settings", 6)
+mkSection("Settings", "Beta")
+
+mkButton("Settings", "Switch to Beta", function()
+    local overlay = Instance.new("Frame")
+    overlay.Size = UDim2.new(1, 0, 1, 0)
+    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    overlay.BackgroundTransparency = 0.4
+    overlay.ZIndex = 50
+    overlay.Parent = Main
+
+    local dialog = Instance.new("Frame")
+    dialog.Size = UDim2.new(0, 260, 0, 130)
+    dialog.Position = UDim2.new(0.5, -130, 0.5, -65)
+    dialog.BackgroundColor3 = C.bg
+    dialog.BorderSizePixel = 0
+    dialog.ZIndex = 51
+    dialog.Parent = overlay
+    Instance.new("UICorner", dialog).CornerRadius = UDim.new(0, 12)
+    local dialogStroke = Instance.new("UIStroke")
+    dialogStroke.Thickness = 1
+    dialogStroke.Color = C.accent
+    dialogStroke.Transparency = 0.5
+    dialogStroke.Parent = dialog
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -20, 0, 20)
+    title.Position = UDim2.new(0, 10, 0, 12)
+    title.BackgroundTransparency = 1
+    title.Text = "Switch to Beta?"
+    title.Font = Enum.Font.GothamBlack
+    title.TextSize = 14
+    title.TextColor3 = C.accent
+    title.ZIndex = 52
+    title.Parent = dialog
+
+    local desc = Instance.new("TextLabel")
+    desc.Size = UDim2.new(1, -20, 0, 36)
+    desc.Position = UDim2.new(0, 10, 0, 36)
+    desc.BackgroundTransparency = 1
+    desc.Text = "This will close the current hub and load the Beta version. Beta features may be unstable."
+    desc.Font = Enum.Font.Gotham
+    desc.TextSize = 10
+    desc.TextColor3 = C.sub
+    desc.TextWrapped = true
+    desc.TextXAlignment = Enum.TextXAlignment.Left
+    desc.ZIndex = 52
+    desc.Parent = dialog
+
+    local yesBtn = Instance.new("TextButton")
+    yesBtn.Size = UDim2.new(0.45, 0, 0, 28)
+    yesBtn.Position = UDim2.new(0.03, 0, 1, -38)
+    yesBtn.BackgroundColor3 = C.accent
+    yesBtn.Text = "Yes, switch"
+    yesBtn.Font = Enum.Font.GothamBold
+    yesBtn.TextSize = 11
+    yesBtn.TextColor3 = C.bg
+    yesBtn.BorderSizePixel = 0
+    yesBtn.AutoButtonColor = false
+    yesBtn.ZIndex = 52
+    yesBtn.Parent = dialog
+    Instance.new("UICorner", yesBtn).CornerRadius = UDim.new(0, 8)
+
+    local noBtn = Instance.new("TextButton")
+    noBtn.Size = UDim2.new(0.45, 0, 0, 28)
+    noBtn.Position = UDim2.new(0.52, 0, 1, -38)
+    noBtn.BackgroundColor3 = C.card
+    noBtn.Text = "Cancel"
+    noBtn.Font = Enum.Font.GothamBold
+    noBtn.TextSize = 11
+    noBtn.TextColor3 = C.sub
+    noBtn.BorderSizePixel = 0
+    noBtn.AutoButtonColor = false
+    noBtn.ZIndex = 52
+    noBtn.Parent = dialog
+    Instance.new("UICorner", noBtn).CornerRadius = UDim.new(0, 8)
+
+    noBtn.MouseButton1Click:Connect(function()
+        overlay:Destroy()
+    end)
+
+    yesBtn.MouseButton1Click:Connect(function()
+        overlay:Destroy()
+        showNotif("Loading Beta...", "warning")
+        getgenv().SL_RUNNING = false
+        task.wait(0.5)
+        Gui:Destroy()
+        local betaUrl = "https://raw.githubusercontent.com/Shin-Y-Shin/UUT-idk/main/Games/SellLemons_Beta.lua?v=" .. tostring(os.time())
+        local ok, err = pcall(function()
+            loadstring(game:HttpGet(betaUrl))()
+        end)
+        if not ok then
+            warn("[ShinyHub] Beta load failed: " .. tostring(err))
+        end
+    end)
 end)
 
 mkSpacer("Settings", 6)
