@@ -106,6 +106,7 @@ pcall(function()
     if ls and ls:FindFirstChild("Cash") then startCash = ls.Cash.Value end
 end)
 local stats = {clicks = 0, bought = 0, upgrades = 0, rebirths = 0, drops = 0, income = 0, evolves = 0, ascends = 0, fruits_tp = 0}
+local cashHistory = {}
 
 local function loop(key, fn)
     table.insert(threads, task.spawn(function()
@@ -1286,6 +1287,16 @@ local function getVal(name)
     if not Values then return nil end
     local v = Values:FindFirstChild(name)
     return v and v.Value or nil
+end
+
+local function getCashPerHour()
+    if #cashHistory < 2 then return 0 end
+    local oldest = cashHistory[1]
+    local newest = cashHistory[#cashHistory]
+    local elapsed = newest.time - oldest.time
+    if elapsed < 30 then return 0 end
+    local earned = newest.cash - oldest.cash
+    return math.max(0, (earned / elapsed) * 3600)
 end
 
 local function smartTP(locName)
@@ -3457,7 +3468,6 @@ bnd(creditsSub, {TextColor3 = "dim"})
 --------------------------------------------------------------
 -- CASH TRACKING (for accurate cash/hr)
 --------------------------------------------------------------
-local cashHistory = {}
 local lastMilestone = 0
 
 local milestones = {1e3, 5e3, 1e4, 5e4, 1e5, 2.5e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15}
@@ -3480,16 +3490,6 @@ table.insert(threads, task.spawn(function()
         task.wait(30)
     end
 end))
-
-local function getCashPerHour()
-    if #cashHistory < 2 then return 0 end
-    local oldest = cashHistory[1]
-    local newest = cashHistory[#cashHistory]
-    local elapsed = newest.time - oldest.time
-    if elapsed < 30 then return 0 end
-    local earned = newest.cash - oldest.cash
-    return math.max(0, (earned / elapsed) * 3600)
-end
 
 --------------------------------------------------------------
 -- RESPAWN HANDLER (re-applies effects)
