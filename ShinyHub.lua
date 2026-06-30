@@ -13,6 +13,7 @@ local PG = LP:WaitForChild("PlayerGui")
 local SupportedGames = {
     [113814738390716] = {name = "Untitled Upgrade Tree", file = "UUT.lua"},
     [79268393072444]  = {name = "Sell Lemons", file = "SellLemons.lua"},
+    [2753915549]      = {name = "Blox Fruits", file = "BloxFruits.lua"},
 }
 
 local placeId = game.PlaceId
