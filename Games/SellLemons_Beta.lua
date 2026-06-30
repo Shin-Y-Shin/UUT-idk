@@ -448,6 +448,20 @@ local function loop(key, fn)
 end
 
 --------------------------------------------------------------
+-- CLEANUP REGISTRY (all beta effects register here for removal)
+--------------------------------------------------------------
+local cleanupFns = {}
+local function registerCleanup(fn)
+    table.insert(cleanupFns, fn)
+end
+
+local function cleanupAll()
+    for k, _ in pairs(toggles) do toggles[k] = false end
+    for _, fn in ipairs(togRefresh) do pcall(fn) end
+    for _, fn in ipairs(cleanupFns) do pcall(fn) end
+end
+
+--------------------------------------------------------------
 -- BETA INFO
 --------------------------------------------------------------
 mkSection("Beta Program")
@@ -477,14 +491,11 @@ infoLbl.Parent = infoFrame
 mkSpacer(4)
 
 --------------------------------------------------------------
--- BETA FEATURES
+-- BETA AUTOMATION (unique to beta)
 --------------------------------------------------------------
 mkSection("Beta Automation")
 
-local defaultWalkSpeed = 16
-local defaultJumpPower = 50
-
-mkToggle("Auto Collect Everything", "Collects all drops, fruit, and income at once")
+mkToggle("Auto Collect Everything", "Fires all collect/click/income remotes at once")
 loop("Auto Collect Everything", function()
     for _, r in Remotes:GetChildren() do
         if r:IsA("RemoteEvent") and (r.Name:find("Collect") or r.Name:find("Click") or r.Name:find("Income")) then
@@ -501,22 +512,7 @@ loop("Auto Collect Everything", function()
     task.wait(0.1)
 end)
 
-mkToggle("Auto Buy All Areas", "Automatically purchases area unlocks")
-loop("Auto Buy All Areas", function()
-    for _, area in Purchases:GetChildren() do
-        local buttons = area:FindFirstChild("Buttons")
-        if buttons then
-            for _, item in buttons:GetDescendants() do
-                if item:IsA("ClickDetector") then
-                    pcall(function() fireclickdetector(item) end)
-                end
-            end
-        end
-    end
-    task.wait(1)
-end)
-
-mkToggle("Smart Farm", "Combines all farming actions into one toggle")
+mkToggle("Smart Farm", "One toggle = all remotes fired every cycle")
 loop("Smart Farm", function()
     for _, r in Remotes:GetChildren() do
         if r:IsA("RemoteEvent") then
@@ -526,7 +522,43 @@ loop("Smart Farm", function()
     task.wait(0.15)
 end)
 
+mkToggle("Auto Upgrade Everything", "Buys all items + upgrades + earners together")
+loop("Auto Upgrade Everything", function()
+    for _, area in Purchases:GetChildren() do
+        local buttons = area:FindFirstChild("Buttons")
+        if buttons then
+            for _, item in buttons:GetDescendants() do
+                if item:IsA("ClickDetector") then
+                    pcall(function() fireclickdetector(item) end)
+                elseif item:IsA("ProximityPrompt") then
+                    pcall(function() fireproximityprompt(item) end)
+                end
+            end
+        end
+    end
+    for _, r in Remotes:GetChildren() do
+        if r:IsA("RemoteEvent") and (r.Name:find("Upgrade") or r.Name:find("Level") or r.Name:find("Buy")) then
+            pcall(function() r:FireServer() end)
+        end
+    end
+    task.wait(0.5)
+end)
+
+mkToggle("Turbo Collect", "Spam collects 5x faster than normal")
+loop("Turbo Collect", function()
+    for _, r in Remotes:GetChildren() do
+        if r:IsA("RemoteEvent") then
+            pcall(function() r:FireServer() end)
+        end
+    end
+    task.wait(0.02)
+end)
+
 mkSpacer(4)
+
+--------------------------------------------------------------
+-- BETA VISUALS (unique to beta)
+--------------------------------------------------------------
 mkSection("Beta Visuals")
 
 mkToggle("Matrix Rain", "Green text rain effect on screen")
@@ -540,7 +572,6 @@ table.insert(togRefresh, function()
             matrixGui.DisplayOrder = -1
             pcall(function() matrixGui.Parent = game.CoreGui end)
             if not matrixGui.Parent then matrixGui.Parent = PG end
-
             for i = 1, 30 do
                 task.spawn(function()
                     while getgenv().SL_RUNNING and toggles["Matrix Rain"] do
@@ -567,8 +598,11 @@ table.insert(togRefresh, function()
         if matrixGui then matrixGui:Destroy() matrixGui = nil end
     end
 end)
+registerCleanup(function()
+    if matrixGui then matrixGui:Destroy() matrixGui = nil end
+end)
 
-mkToggle("Neon Outline", "Adds glowing outline to your character")
+mkToggle("Neon Outline", "Glowing highlight outline on your character")
 local outlineHighlight = nil
 table.insert(togRefresh, function()
     if toggles["Neon Outline"] then
@@ -583,6 +617,9 @@ table.insert(togRefresh, function()
     else
         if outlineHighlight then outlineHighlight:Destroy() outlineHighlight = nil end
     end
+end)
+registerCleanup(function()
+    if outlineHighlight then outlineHighlight:Destroy() outlineHighlight = nil end
 end)
 
 mkToggle("Trail Effect", "Leaves a glowing trail behind you")
@@ -613,8 +650,72 @@ table.insert(togRefresh, function()
         trailAttachments = {}
     end
 end)
+registerCleanup(function()
+    for _, obj in ipairs(trailAttachments) do pcall(function() obj:Destroy() end) end
+    trailAttachments = {}
+end)
+
+mkToggle("Particle Aura", "Swirling particles around your character")
+local auraEmitter = nil
+table.insert(togRefresh, function()
+    if toggles["Particle Aura"] then
+        if not auraEmitter and LP.Character then
+            local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                auraEmitter = Instance.new("ParticleEmitter")
+                auraEmitter.Name = "SH_Aura"
+                auraEmitter.Rate = 40
+                auraEmitter.Lifetime = NumberRange.new(0.5, 1.2)
+                auraEmitter.Speed = NumberRange.new(2, 5)
+                auraEmitter.SpreadAngle = Vector2.new(180, 180)
+                auraEmitter.Color = ColorSequence.new(C.accent, Color3.fromRGB(255, 255, 255))
+                auraEmitter.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0)})
+                auraEmitter.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1)})
+                auraEmitter.LightEmission = 1
+                auraEmitter.Parent = hrp
+            end
+        end
+    else
+        if auraEmitter then auraEmitter:Destroy() auraEmitter = nil end
+    end
+end)
+registerCleanup(function()
+    if auraEmitter then auraEmitter:Destroy() auraEmitter = nil end
+end)
+
+mkToggle("RGB Character", "Cycles your character body colors")
+loop("RGB Character", function()
+    if LP.Character then
+        local hue = (tick() * 0.3) % 1
+        local col = Color3.fromHSV(hue, 0.8, 1)
+        for _, part in LP.Character:GetDescendants() do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                pcall(function() part.Color = col end)
+            end
+        end
+    end
+    task.wait(0.05)
+end)
+local savedBodyColors = {}
+registerCleanup(function()
+    if LP.Character then
+        local bc = LP.Character:FindFirstChildOfClass("BodyColors")
+        if bc then
+            bc.HeadColor3 = BrickColor.new("Bright yellow").Color
+            bc.TorsoColor3 = BrickColor.new("Bright blue").Color
+            bc.LeftArmColor3 = BrickColor.new("Bright yellow").Color
+            bc.RightArmColor3 = BrickColor.new("Bright yellow").Color
+            bc.LeftLegColor3 = BrickColor.new("Br. yellowish green").Color
+            bc.RightLegColor3 = BrickColor.new("Br. yellowish green").Color
+        end
+    end
+end)
 
 mkSpacer(4)
+
+--------------------------------------------------------------
+-- BETA MOVEMENT (unique to beta)
+--------------------------------------------------------------
 mkSection("Beta Movement")
 
 mkToggle("Dash", "Double-tap W to dash forward")
@@ -635,21 +736,245 @@ UIS.InputBegan:Connect(function(input, gpe)
     end
 end)
 
-mkToggle("Auto Respawn", "Automatically respawns on death")
-loop("Auto Respawn", function()
-    local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-    if hum and hum.Health <= 0 then
-        LP.Character:BreakJoints()
-        task.wait(1)
+mkToggle("Moon Jump", "Hold space to float upward slowly")
+local moonJumpConn = nil
+table.insert(togRefresh, function()
+    if toggles["Moon Jump"] then
+        if not moonJumpConn then
+            moonJumpConn = RunS.Heartbeat:Connect(function()
+                if UIS:IsKeyDown(Enum.KeyCode.Space) then
+                    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        hrp.Velocity = Vector3.new(hrp.Velocity.X, 35, hrp.Velocity.Z)
+                    end
+                end
+            end)
+        end
+    else
+        if moonJumpConn then moonJumpConn:Disconnect() moonJumpConn = nil end
     end
-    task.wait(0.5)
+end)
+registerCleanup(function()
+    if moonJumpConn then moonJumpConn:Disconnect() moonJumpConn = nil end
+end)
+
+mkToggle("Bunny Hop", "Auto-jump while walking")
+local bunnyConn = nil
+table.insert(togRefresh, function()
+    if toggles["Bunny Hop"] then
+        if not bunnyConn then
+            bunnyConn = RunS.Heartbeat:Connect(function()
+                local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+                if hum and hum.MoveDirection.Magnitude > 0 then
+                    hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        end
+    else
+        if bunnyConn then bunnyConn:Disconnect() bunnyConn = nil end
+    end
+end)
+registerCleanup(function()
+    if bunnyConn then bunnyConn:Disconnect() bunnyConn = nil end
+end)
+
+mkToggle("TP to Mouse", "Press T to teleport to cursor position")
+UIS.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if toggles["TP to Mouse"] and input.KeyCode == Enum.KeyCode.T then
+        local mouse = LP:GetMouse()
+        if mouse.Hit and LP.Character then
+            local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0, 3, 0))
+            end
+        end
+    end
 end)
 
 mkSpacer(4)
-mkSection("Utilities")
+
+--------------------------------------------------------------
+-- BETA CAMERA (unique to beta)
+--------------------------------------------------------------
+mkSection("Beta Camera")
+
+mkToggle("Freecam", "Detach camera, fly around freely with WASD")
+local freecamConn = nil
+local savedCamType = nil
+table.insert(togRefresh, function()
+    if toggles["Freecam"] then
+        local cam = game.Workspace.CurrentCamera
+        savedCamType = cam.CameraType
+        cam.CameraType = Enum.CameraType.Scriptable
+        if not freecamConn then
+            local speed = 1
+            freecamConn = RunS.RenderStepped:Connect(function(dt)
+                local cam = game.Workspace.CurrentCamera
+                local move = Vector3.new(0, 0, 0)
+                if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + cam.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then move = move - cam.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then move = move - cam.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then move = move + cam.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.E) then move = move + Vector3.new(0, 1, 0) end
+                if UIS:IsKeyDown(Enum.KeyCode.Q) then move = move - Vector3.new(0, 1, 0) end
+                if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then speed = 3 else speed = 1 end
+                if move.Magnitude > 0 then
+                    cam.CFrame = cam.CFrame + move.Unit * 60 * speed * dt
+                end
+            end)
+        end
+    else
+        if freecamConn then freecamConn:Disconnect() freecamConn = nil end
+        if savedCamType then
+            game.Workspace.CurrentCamera.CameraType = savedCamType
+            savedCamType = nil
+        end
+    end
+end)
+registerCleanup(function()
+    if freecamConn then freecamConn:Disconnect() freecamConn = nil end
+    if savedCamType then
+        game.Workspace.CurrentCamera.CameraType = savedCamType
+        savedCamType = nil
+    end
+end)
+
+mkToggle("Third Person Lock", "Forces third person view")
+local savedMinZoom = nil
+local savedMaxZoom = nil
+table.insert(togRefresh, function()
+    if toggles["Third Person Lock"] then
+        savedMinZoom = LP.CameraMinZoomDistance
+        savedMaxZoom = LP.CameraMaxZoomDistance
+        LP.CameraMinZoomDistance = 12
+        LP.CameraMaxZoomDistance = 12
+    else
+        if savedMinZoom then LP.CameraMinZoomDistance = savedMinZoom savedMinZoom = nil end
+        if savedMaxZoom then LP.CameraMaxZoomDistance = savedMaxZoom savedMaxZoom = nil end
+    end
+end)
+registerCleanup(function()
+    if savedMinZoom then LP.CameraMinZoomDistance = savedMinZoom end
+    if savedMaxZoom then LP.CameraMaxZoomDistance = savedMaxZoom end
+end)
+
+mkSpacer(4)
+
+--------------------------------------------------------------
+-- BETA UTILITY (unique to beta)
+--------------------------------------------------------------
+mkSection("Beta Utility")
+
+mkToggle("Anti AFK", "Prevents idle kick by simulating input")
+local antiAfkConn = nil
+table.insert(togRefresh, function()
+    if toggles["Anti AFK"] then
+        if not antiAfkConn then
+            local VU = game:GetService("VirtualUser")
+            antiAfkConn = LP.Idled:Connect(function()
+                pcall(function() VU:CaptureController() VU:ClickButton2(Vector2.new()) end)
+            end)
+        end
+    else
+        if antiAfkConn then antiAfkConn:Disconnect() antiAfkConn = nil end
+    end
+end)
+registerCleanup(function()
+    if antiAfkConn then antiAfkConn:Disconnect() antiAfkConn = nil end
+end)
+
+mkToggle("FPS Unlocker", "Removes frame rate cap (if supported)")
+local savedFpsCap = nil
+table.insert(togRefresh, function()
+    if toggles["FPS Unlocker"] then
+        pcall(function()
+            savedFpsCap = getfpscap and getfpscap() or nil
+            if setfpscap then setfpscap(9999) end
+        end)
+    else
+        pcall(function()
+            if setfpscap then setfpscap(savedFpsCap or 60) end
+        end)
+    end
+end)
+registerCleanup(function()
+    pcall(function()
+        if setfpscap and savedFpsCap then setfpscap(savedFpsCap) end
+    end)
+end)
+
+mkToggle("Chat Spy", "Logs all player chat messages to console")
+local chatSpyConn = nil
+table.insert(togRefresh, function()
+    if toggles["Chat Spy"] then
+        if not chatSpyConn then
+            chatSpyConn = Players.PlayerChatted:Connect(function(chatType, player, message)
+                print("[ChatSpy] " .. player.Name .. ": " .. message)
+            end)
+            if not chatSpyConn or not chatSpyConn.Connected then
+                chatSpyConn = nil
+                for _, p in Players:GetPlayers() do
+                    if p ~= LP then
+                        pcall(function()
+                            p.Chatted:Connect(function(msg)
+                                if toggles["Chat Spy"] then
+                                    print("[ChatSpy] " .. p.Name .. ": " .. msg)
+                                end
+                            end)
+                        end)
+                    end
+                end
+                Players.PlayerAdded:Connect(function(p)
+                    pcall(function()
+                        p.Chatted:Connect(function(msg)
+                            if toggles["Chat Spy"] then
+                                print("[ChatSpy] " .. p.Name .. ": " .. msg)
+                            end
+                        end)
+                    end)
+                end)
+                chatSpyConn = {Connected = true, Disconnect = function() end}
+            end
+        end
+    else
+        if chatSpyConn and chatSpyConn.Disconnect then pcall(function() chatSpyConn:Disconnect() end) chatSpyConn = nil end
+    end
+end)
+
+mkButton("Print All Remotes", function()
+    showNotif("Remotes printed to console", "info")
+    print("=== TYCOON REMOTES ===")
+    for _, r in Remotes:GetDescendants() do
+        print("  [" .. r.ClassName .. "] " .. r:GetFullName())
+    end
+    print("=== REPLICATED STORAGE REMOTES ===")
+    for _, r in RS:GetDescendants() do
+        if r:IsA("RemoteEvent") or r:IsA("RemoteFunction") then
+            print("  [" .. r.ClassName .. "] " .. r:GetFullName())
+        end
+    end
+end)
+
+mkButton("Copy Server Link", function()
+    local jobId = game.JobId
+    if setclipboard then
+        pcall(function()
+            setclipboard("Roblox.GameLauncher.joinGameInstance(" .. game.PlaceId .. ", \"" .. jobId .. "\")")
+        end)
+        showNotif("Server link copied!", "success")
+    else
+        showNotif("Clipboard not supported", "error")
+    end
+end)
+
+mkSpacer(6)
+mkSection("Switch")
 
 mkButton("Switch to Stable", function()
-    showNotif("Switching to stable...", "info")
+    showNotif("Cleaning up & switching...", "info")
+    cleanupAll()
+    task.wait(0.3)
     getgenv().SL_RUNNING = false
     task.wait(0.5)
     Gui:Destroy()
@@ -664,6 +989,7 @@ end)
 
 mkButton("Rejoin Server", function()
     showNotif("Rejoining...", "info")
+    cleanupAll()
     task.wait(0.5)
     game:GetService("TeleportService"):Teleport(game.PlaceId, LP)
 end)
