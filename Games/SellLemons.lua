@@ -1523,6 +1523,15 @@ mkButton("Home", "Explorer Mode", function()
     showNotif("Explorer Mode: Movement + ESP ON", "info")
 end)
 
+mkButton("Home", "Max Grind + TP Loop", function()
+    for k, _ in pairs(toggles) do toggles[k] = false end
+    for _, name in ipairs({"Auto Buy Items", "Auto Click Income", "Auto Upgrade Earners", "Auto Collect Fruit", "Auto Collect Drops", "Auto Phone Offer", "Auto Toggle Conveyors", "Auto Rebirth", "Auto Evolve", "Auto Ascend", "Auto Upgrade Power", "Auto Special Income", "Auto All Prompts", "Auto Fruit Service", "Auto Click All", "TP to Trees", "TP Income Loop", "Speed Boost", "Fullbright", "Auto Respawn"}) do
+        toggles[name] = true
+    end
+    for _, fn in ipairs(togRefresh) do pcall(fn) end
+    showNotif("MAX GRIND + TP Loop! Go AFK", "success")
+end)
+
 --------------------------------------------------------------
 -- FARM TAB
 --------------------------------------------------------------
@@ -1891,6 +1900,16 @@ end)
 
 mkSpacer("Boost", 2)
 mkSection("Boost", "Instant Boosts")
+
+mkToggle("Boost", "Auto Collect Boosts", "Auto-claims time cash & earner boost")
+loop("Auto Collect Boosts", function()
+    pcall(function() Remotes.UseTimeCash:InvokeServer() end)
+    pcall(function() Remotes.UseEarnerBoost:InvokeServer() end)
+    pcall(function() Remotes.DoubleOfflineCash:InvokeServer() end)
+    task.wait(30)
+end)
+
+mkSpacer("Boost", 2)
 
 mkButton("Boost", "Collect Time Cash", function()
     pcall(function() Remotes.UseTimeCash:InvokeServer() end)
@@ -2565,6 +2584,18 @@ mkButton("Stats", "Copy Stats to Clipboard", function()
     pcall(function() setclipboard(table.concat(lines, "\n")) end)
     showNotif("Stats copied to clipboard!", "success")
 end)
+
+mkSpacer("Stats", 3)
+mkSection("Stats", "Performance")
+
+mkDualStat("Stats",
+    "REMOTE CALLS", function()
+        return fmtNum(stats.bought + stats.upgrades + stats.income + stats.rebirths + stats.evolves + stats.ascends + stats.drops + stats.clicks)
+    end,
+    "FRUITS COLLECTED", function()
+        return fmtNum(stats.clicks)
+    end
+)
 
 mkSpacer("Stats", 3)
 mkSection("Stats", "Server Info")
