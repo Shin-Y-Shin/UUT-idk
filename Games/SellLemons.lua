@@ -974,11 +974,15 @@ mkStatCard("Home", "CASH", function() return fmtNum(getCash()) end)
 mkSpacer("Home", 3)
 
 mkDualStat("Home",
-    "CASH / MIN", function()
-        local elapsed = os.clock() - sessionStart
-        if elapsed < 5 then return "---" end
-        local earned = getCash() - startCash
-        return fmtNum(math.max(0, (earned / elapsed) * 60))
+    "CASH / HR", function()
+        local cph = getCashPerHour()
+        if cph == 0 then
+            local elapsed = os.clock() - sessionStart
+            if elapsed < 5 then return "---" end
+            local earned = getCash() - startCash
+            return fmtNum(math.max(0, (earned / elapsed) * 3600))
+        end
+        return fmtNum(cph)
     end,
     "UPTIME", function()
         local e = os.clock() - sessionStart
@@ -1155,6 +1159,29 @@ loop("Auto Phone Offer", function()
     task.wait(1.5)
 end)
 
+mkSpacer("Farm", 2)
+mkSection("Farm", "Conveyors")
+
+mkToggle("Farm", "Auto Toggle Conveyors", "Fires conveyor belt prompts")
+loop("Auto Toggle Conveyors", function()
+    for _, area in Purchases:GetChildren() do
+        if not getgenv().SL_RUNNING or not toggles["Auto Toggle Conveyors"] then return end
+        local function findPrompts(parent)
+            for _, child in parent:GetChildren() do
+                if not getgenv().SL_RUNNING or not toggles["Auto Toggle Conveyors"] then return end
+                if child.Name == "TogglePrompt" and child:IsA("ProximityPrompt") then
+                    pcall(fireproximityprompt, child)
+                    task.wait(0.1)
+                elseif child:IsA("Model") or child:IsA("Folder") or child:IsA("BasePart") then
+                    findPrompts(child)
+                end
+            end
+        end
+        findPrompts(area)
+    end
+    task.wait(2)
+end)
+
 --------------------------------------------------------------
 -- BOOST TAB
 --------------------------------------------------------------
@@ -1250,6 +1277,74 @@ if #otherLocs > 0 then
 end
 
 mkSpacer("Teleport", 4)
+mkSection("Teleport", "Waypoints")
+
+mkToggle("Teleport", "Show Area Waypoints", "BillboardGui markers on areas")
+local waypointGuis = {}
+
+local function createWaypoints()
+    for _, areaName in ipairs(areaNames) do
+        local area = Purchases:FindFirstChild(areaName)
+        if area then
+            local m = area:FindFirstChild(areaName)
+            if m and m:IsA("Model") then
+                local part = m:FindFirstChild(areaName)
+                if part and part:IsA("BasePart") then
+                    local bb = Instance.new("BillboardGui")
+                    bb.Name = "SH_Waypoint"
+                    bb.Size = UDim2.new(0, 100, 0, 30)
+                    bb.StudsOffset = Vector3.new(0, 6, 0)
+                    bb.AlwaysOnTop = true
+                    bb.Adornee = part
+                    bb.Parent = game.CoreGui
+
+                    local l = Instance.new("TextLabel")
+                    l.Size = UDim2.new(1, 0, 1, 0)
+                    l.BackgroundTransparency = 0.4
+                    l.BackgroundColor3 = C.bg
+                    l.Text = areaName
+                    l.Font = Enum.Font.GothamBold
+                    l.TextSize = 11
+                    l.TextColor3 = C.accent
+                    l.Parent = bb
+                    Instance.new("UICorner", l).CornerRadius = UDim.new(0, 6)
+
+                    local strk = Instance.new("UIStroke")
+                    strk.Thickness = 1
+                    strk.Transparency = 0.5
+                    strk.Color = C.accent
+                    strk.Parent = l
+
+                    table.insert(waypointGuis, bb)
+                end
+            end
+        end
+    end
+end
+
+local function destroyWaypoints()
+    for _, gui in ipairs(waypointGuis) do
+        pcall(function() gui:Destroy() end)
+    end
+    waypointGuis = {}
+end
+
+table.insert(threads, task.spawn(function()
+    local wasOn = false
+    while getgenv().SL_RUNNING do
+        if toggles["Show Area Waypoints"] and not wasOn then
+            createWaypoints()
+            wasOn = true
+        elseif not toggles["Show Area Waypoints"] and wasOn then
+            destroyWaypoints()
+            wasOn = false
+        end
+        task.wait(0.3)
+    end
+    destroyWaypoints()
+end))
+
+mkSpacer("Teleport", 4)
 mkSection("Teleport", "Special")
 mkButton("Teleport", "TP to Spawn", function()
     local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
@@ -1310,8 +1405,54 @@ mkDualStat("Stats",
         if e >= 3600 then return string.format("%dh %dm %ds", math.floor(e/3600), math.floor(e%3600/60), math.floor(e%60)) end
         return string.format("%dm %ds", math.floor(e / 60), math.floor(e % 60))
     end,
-    "FEATURES USED", function() return tostring(countActive()) end
+    "CASH / HR", function() return fmtNum(getCashPerHour()) end
 )
+
+mkSpacer("Stats", 3)
+
+mkStatCard("Stats", "SERVER PLAYERS", function()
+    return tostring(#Players:GetPlayers()) .. " / " .. tostring(Players.MaxPlayers)
+end)
+
+mkSpacer("Stats", 3)
+mkSection("Stats", "Tycoon Owners")
+
+-- Dynamic list of tycoon owners
+local ownerList = Instance.new("TextLabel")
+ownerList.LayoutOrder = nxt("Stats")
+ownerList.Size = UDim2.new(1, 0, 0, 14)
+ownerList.BackgroundTransparency = 1
+ownerList.Font = Enum.Font.Gotham
+ownerList.TextSize = 10
+ownerList.TextXAlignment = Enum.TextXAlignment.Left
+ownerList.TextWrapped = true
+ownerList.AutomaticSize = Enum.AutomaticSize.Y
+ownerList.ZIndex = 2
+ownerList.RichText = true
+ownerList.Parent = tabPages.Stats
+bnd(ownerList, {TextColor3 = "sub"})
+
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        local lines = {}
+        for i = 1, 10 do
+            for _, f in game.Workspace:GetChildren() do
+                if f.Name == "Tycoon" .. i and f:IsA("Folder") then
+                    local o = f:FindFirstChild("Owner")
+                    if o and o.Value and o.Value:IsA("Player") then
+                        local isMe = o.Value == LP
+                        local prefix = isMe and "<b>" or ""
+                        local suffix = isMe and " (You)</b>" or ""
+                        table.insert(lines, "  " .. prefix .. "#" .. i .. " — " .. o.Value.Name .. suffix)
+                    end
+                end
+            end
+        end
+        ownerList.Text = table.concat(lines, "\n")
+        ownerList.Size = UDim2.new(1, 0, 0, math.max(14, #lines * 14))
+        task.wait(5)
+    end
+end))
 
 --------------------------------------------------------------
 -- SETTINGS TAB
@@ -1358,6 +1499,111 @@ table.insert(threads, task.spawn(function()
             end
         end
     end)
+end))
+
+mkSpacer("Settings", 2)
+mkSection("Settings", "Exploits")
+
+mkToggle("Settings", "Fly", "Press E to fly, Q to descend")
+local flySpeed = 60
+local flyBody = nil
+local flyGyro = nil
+
+local function startFly()
+    local char = LP.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.PlatformStand = true end
+
+    flyBody = Instance.new("BodyVelocity")
+    flyBody.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    flyBody.Velocity = Vector3.new(0, 0, 0)
+    flyBody.Parent = hrp
+
+    flyGyro = Instance.new("BodyGyro")
+    flyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    flyGyro.D = 200
+    flyGyro.P = 40000
+    flyGyro.Parent = hrp
+end
+
+local function stopFly()
+    if flyBody then flyBody:Destroy() flyBody = nil end
+    if flyGyro then flyGyro:Destroy() flyGyro = nil end
+    local char = LP.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.PlatformStand = false end
+    end
+end
+
+table.insert(threads, task.spawn(function()
+    local wasFlying = false
+    while getgenv().SL_RUNNING do
+        if toggles["Fly"] then
+            if not wasFlying then startFly() wasFlying = true end
+            local cam = game.Workspace.CurrentCamera
+            local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and flyBody and flyGyro then
+                local dir = Vector3.new(0, 0, 0)
+                if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.E) then dir = dir + Vector3.new(0, 1, 0) end
+                if UIS:IsKeyDown(Enum.KeyCode.Q) then dir = dir - Vector3.new(0, 1, 0) end
+                if dir.Magnitude > 0 then dir = dir.Unit end
+                flyBody.Velocity = dir * flySpeed
+                flyGyro.CFrame = cam.CFrame
+            end
+        else
+            if wasFlying then stopFly() wasFlying = false end
+        end
+        task.wait(1/60)
+    end
+    if wasFlying then stopFly() end
+end))
+
+mkToggle("Settings", "Fullbright", "Removes darkness & fog")
+local savedLighting = {}
+loop("Fullbright", function()
+    local L = game:GetService("Lighting")
+    if #savedLighting == 0 then
+        savedLighting = {
+            Brightness = L.Brightness,
+            ClockTime = L.ClockTime,
+            FogEnd = L.FogEnd,
+            GlobalShadows = L.GlobalShadows,
+            Ambient = L.Ambient,
+        }
+    end
+    L.Brightness = 2
+    L.ClockTime = 14
+    L.FogEnd = 100000
+    L.GlobalShadows = false
+    L.Ambient = Color3.fromRGB(178, 178, 178)
+    task.wait(1)
+end)
+
+-- Restore lighting when Fullbright toggled off
+table.insert(threads, task.spawn(function()
+    local wasOn = false
+    while getgenv().SL_RUNNING do
+        if wasOn and not toggles["Fullbright"] and #savedLighting > 0 then
+            local L = game:GetService("Lighting")
+            pcall(function()
+                L.Brightness = savedLighting.Brightness
+                L.ClockTime = savedLighting.ClockTime
+                L.FogEnd = savedLighting.FogEnd
+                L.GlobalShadows = savedLighting.GlobalShadows
+                L.Ambient = savedLighting.Ambient
+            end)
+        end
+        wasOn = toggles["Fullbright"]
+        task.wait(0.3)
+    end
 end))
 
 mkSpacer("Settings", 4)
@@ -1453,6 +1699,28 @@ for _, theme in ipairs(Themes) do
         tw(b, {BackgroundColor3 = C.card}, 0.1)
         tw(l, {TextColor3 = C.sub}, 0.1)
     end)
+end
+
+--------------------------------------------------------------
+-- CASH TRACKING (for accurate cash/hr)
+--------------------------------------------------------------
+local cashHistory = {}
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        table.insert(cashHistory, {time = os.clock(), cash = getCash()})
+        if #cashHistory > 120 then table.remove(cashHistory, 1) end
+        task.wait(30)
+    end
+end))
+
+local function getCashPerHour()
+    if #cashHistory < 2 then return 0 end
+    local oldest = cashHistory[1]
+    local newest = cashHistory[#cashHistory]
+    local elapsed = newest.time - oldest.time
+    if elapsed < 30 then return 0 end
+    local earned = newest.cash - oldest.cash
+    return math.max(0, (earned / elapsed) * 3600)
 end
 
 --------------------------------------------------------------
