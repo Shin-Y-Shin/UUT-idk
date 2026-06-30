@@ -461,7 +461,7 @@ end)
 -- LEFT SIDEBAR
 --------------------------------------------------------------
 local Sidebar = Instance.new("Frame")
-Sidebar.Size = UDim2.new(0, SIDE_W, 1, -HDR_H)
+Sidebar.Size = UDim2.new(0, SIDE_W, 1, -HDR_H - 18)
 Sidebar.Position = UDim2.new(0, 0, 0, HDR_H)
 Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 5
@@ -611,12 +611,54 @@ bnd(KeyLbl, {TextColor3 = "dim"})
 -- CONTENT
 --------------------------------------------------------------
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, -SIDE_W, 1, -HDR_H)
+Content.Size = UDim2.new(1, -SIDE_W, 1, -HDR_H - 18)
 Content.Position = UDim2.new(0, SIDE_W, 0, HDR_H)
 Content.BackgroundTransparency = 1
 Content.ClipsDescendants = true
 Content.ZIndex = 2
 Content.Parent = Main
+
+-- Status bar at bottom
+local StatusBar = Instance.new("Frame")
+StatusBar.Size = UDim2.new(1, 0, 0, 18)
+StatusBar.Position = UDim2.new(0, 0, 1, -18)
+StatusBar.BorderSizePixel = 0
+StatusBar.ZIndex = 10
+StatusBar.Parent = Main
+bnd(StatusBar, {BackgroundColor3 = "header"})
+
+local StatusBarLbl = Instance.new("TextLabel")
+StatusBarLbl.Size = UDim2.new(1, -20, 1, 0)
+StatusBarLbl.Position = UDim2.new(0, 10, 0, 0)
+StatusBarLbl.BackgroundTransparency = 1
+StatusBarLbl.Font = Enum.Font.Gotham
+StatusBarLbl.TextSize = 8
+StatusBarLbl.TextXAlignment = Enum.TextXAlignment.Left
+StatusBarLbl.ZIndex = 11
+StatusBarLbl.Parent = StatusBar
+bnd(StatusBarLbl, {TextColor3 = "dim"})
+
+local StatusBarRight = Instance.new("TextLabel")
+StatusBarRight.Size = UDim2.new(0.5, -10, 1, 0)
+StatusBarRight.Position = UDim2.new(0.5, 0, 0, 0)
+StatusBarRight.BackgroundTransparency = 1
+StatusBarRight.Font = Enum.Font.Gotham
+StatusBarRight.TextSize = 8
+StatusBarRight.TextXAlignment = Enum.TextXAlignment.Right
+StatusBarRight.ZIndex = 11
+StatusBarRight.Parent = StatusBar
+bnd(StatusBarRight, {TextColor3 = "dim"})
+
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        local n = countActive()
+        local e = os.clock() - sessionStart
+        local uptime = string.format("%dm %ds", math.floor(e / 60), math.floor(e % 60))
+        StatusBarLbl.Text = n .. " active | " .. uptime .. " | " .. fmtNum(getCash()) .. " cash"
+        StatusBarRight.Text = "ShinyHub v6.0 | !help for cmds"
+        task.wait(1)
+    end
+end))
 
 local PageTitle = Instance.new("TextLabel")
 PageTitle.Size = UDim2.new(1, -24, 0, 22)
@@ -1664,6 +1706,40 @@ loop("Auto All Prompts", function()
     end
     task.wait(0.3)
 end)
+
+mkSpacer("Farm", 2)
+mkToggle("Farm", "TP Income Loop", "TPs to each earner + clicks income")
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        if toggles["TP Income Loop"] then
+            local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                for _, areaName in ipairs(areaNames) do
+                    if not toggles["TP Income Loop"] then break end
+                    local area = Purchases:FindFirstChild(areaName)
+                    if area then
+                        local m = area:FindFirstChild(areaName)
+                        if m and m:IsA("Model") then
+                            local part = m:FindFirstChild(areaName)
+                            if part and part:IsA("BasePart") then
+                                hrp.CFrame = part.CFrame + Vector3.new(0, 3, 0)
+                                task.wait(0.1)
+                                local prompt = part:FindFirstChild("Prompt")
+                                if prompt then pcall(fireproximityprompt, prompt) end
+                                local upg = part:FindFirstChild("Upgrade")
+                                if upg then pcall(function() upg:InvokeServer(1) end) end
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+                end
+            end
+            task.wait(0.5)
+        else
+            task.wait(0.3)
+        end
+    end
+end))
 
 mkSpacer("Farm", 2)
 mkSection("Farm", "Conveyors")
@@ -3108,6 +3184,64 @@ local function getCashPerHour()
     local earned = newest.cash - oldest.cash
     return math.max(0, (earned / elapsed) * 3600)
 end
+
+--------------------------------------------------------------
+-- CHAT COMMANDS
+--------------------------------------------------------------
+pcall(function()
+    LP.Chatted:Connect(function(msg)
+        local lower = msg:lower()
+        if lower:sub(1, 6) == "!speed" then
+            local num = tonumber(lower:sub(7))
+            if num then
+                local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+                if hum then hum.WalkSpeed = num end
+                showNotif("Speed set to " .. num, "success")
+            end
+        elseif lower:sub(1, 5) == "!jump" then
+            local num = tonumber(lower:sub(6))
+            if num then
+                local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+                if hum then hum.JumpPower = num end
+                showNotif("Jump set to " .. num, "success")
+            end
+        elseif lower:sub(1, 4) == "!fov" then
+            local num = tonumber(lower:sub(5))
+            if num then
+                pcall(function() game.Workspace.CurrentCamera.FieldOfView = math.clamp(num, 1, 120) end)
+                showNotif("FOV set to " .. num, "success")
+            end
+        elseif lower == "!afk" then
+            for k, _ in pairs(toggles) do toggles[k] = false end
+            for _, name in ipairs({"Auto Buy Items", "Auto Click Income", "Auto Upgrade Earners", "Auto Collect Fruit", "Auto Collect Drops", "Auto Phone Offer", "Auto Toggle Conveyors", "Auto Rebirth", "Auto Evolve", "Auto Ascend", "Auto Upgrade Power"}) do
+                toggles[name] = true
+            end
+            for _, fn in ipairs(togRefresh) do pcall(fn) end
+            showNotif("AFK Mode activated via chat", "success")
+        elseif lower == "!off" then
+            for k, _ in pairs(toggles) do toggles[k] = false end
+            for _, fn in ipairs(togRefresh) do pcall(fn) end
+            showNotif("All features disabled via chat", "warning")
+        elseif lower == "!help" or lower == "!cmds" then
+            showNotif("Commands: !speed N, !jump N, !fov N, !afk, !off", "info")
+        elseif lower:sub(1, 3) == "!tp" then
+            local target = lower:sub(4):match("^%s*(.+)%s*$")
+            if target then
+                for _, p in Players:GetPlayers() do
+                    if p.Name:lower():find(target) and p ~= LP then
+                        local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+                        local tHRP = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+                        if hrp and tHRP then
+                            hrp.CFrame = tHRP.CFrame + Vector3.new(0, 3, 0)
+                            showNotif("TP: " .. p.Name, "info")
+                        end
+                        break
+                    end
+                end
+            end
+        end
+    end)
+end)
 
 --------------------------------------------------------------
 -- ENTRANCE ANIMATION
