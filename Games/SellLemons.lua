@@ -260,15 +260,33 @@ HeaderFill.ZIndex = 10
 HeaderFill.Parent = Header
 bnd(HeaderFill, {BackgroundColor3 = "header"})
 
--- Accent line under header
+-- Accent line under header (gradient glow)
 local AccentLine = Instance.new("Frame")
-AccentLine.Size = UDim2.new(1, 0, 0, 1)
+AccentLine.Size = UDim2.new(1, 0, 0, 2)
 AccentLine.Position = UDim2.new(0, 0, 1, 0)
 AccentLine.BorderSizePixel = 0
-AccentLine.BackgroundTransparency = 0.7
+AccentLine.BackgroundTransparency = 0.3
 AccentLine.ZIndex = 11
 AccentLine.Parent = Header
 bnd(AccentLine, {BackgroundColor3 = "accent"})
+
+local accentGrad = Instance.new("UIGradient")
+accentGrad.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.8),
+    NumberSequenceKeypoint.new(0.3, 0),
+    NumberSequenceKeypoint.new(0.7, 0),
+    NumberSequenceKeypoint.new(1, 0.8),
+})
+accentGrad.Parent = AccentLine
+
+table.insert(threads, task.spawn(function()
+    local offset = 0
+    while getgenv().SL_RUNNING do
+        offset = (offset + 0.005) % 1
+        accentGrad.Offset = Vector2.new(offset, 0)
+        task.wait(1/30)
+    end
+end))
 
 -- Status dot (pulsing)
 local StatusDot = Instance.new("Frame")
@@ -715,8 +733,29 @@ local function switchTab(name)
     tw(SideIndicator, {Position = UDim2.new(0, 0, 0, 8 + (idx - 1) * 32 + 3)}, 0.25, Enum.EasingStyle.Back)
 end
 
+local lastTabClick = {}
 for name, t in pairs(tabBtns) do
-    t.btn.MouseButton1Click:Connect(function() switchTab(name) end)
+    t.btn.MouseButton1Click:Connect(function()
+        local now = os.clock()
+        if lastTabClick[name] and (now - lastTabClick[name]) < 0.4 then
+            local toggleList = tabToggles[name]
+            if toggleList and #toggleList > 0 then
+                local anyOn = false
+                for _, tName in ipairs(toggleList) do
+                    if toggles[tName] then anyOn = true break end
+                end
+                for _, tName in ipairs(toggleList) do
+                    toggles[tName] = not anyOn
+                end
+                for _, fn in ipairs(togRefresh) do pcall(fn) end
+                showNotif((anyOn and "Disabled" or "Enabled") .. " all " .. name, anyOn and "warning" or "success")
+            end
+            lastTabClick[name] = 0
+        else
+            switchTab(name)
+            lastTabClick[name] = now
+        end
+    end)
 end
 
 --------------------------------------------------------------
@@ -1282,6 +1321,17 @@ mkDualStat("Home",
     end
 )
 
+mkSpacer("Home", 3)
+mkStatCard("Home", "ACTIVE FEATURES", function()
+    local names = {}
+    for k, v in pairs(toggles) do
+        if v then table.insert(names, k) end
+    end
+    if #names == 0 then return "None" end
+    if #names <= 3 then return table.concat(names, ", ") end
+    return #names .. " features running"
+end)
+
 mkSpacer("Home", 6)
 mkSection("Home", "Purchase Progress")
 
@@ -1709,7 +1759,23 @@ mkButton("Boost", "Collect ALL Boosts", function()
     pcall(function() Remotes.UseTimeCash:InvokeServer() end)
     pcall(function() Remotes.UseEarnerBoost:InvokeServer() end)
     pcall(function() Remotes.DoubleOfflineCash:InvokeServer() end)
-    showNotif("All boosts collected!")
+    showNotif("All boosts collected!", "success")
+end)
+
+mkButton("Boost", "Fire ALL Known Remotes", function()
+    showNotif("Firing all remotes...", "info")
+    local count = 0
+    for _, remote in Remotes:GetChildren() do
+        pcall(function()
+            if remote:IsA("RemoteFunction") then
+                remote:InvokeServer()
+            elseif remote:IsA("RemoteEvent") then
+                remote:FireServer()
+            end
+            count = count + 1
+        end)
+    end
+    showNotif("Fired " .. count .. " remotes", "success")
 end)
 
 --------------------------------------------------------------
@@ -1811,6 +1877,70 @@ table.insert(threads, task.spawn(function()
     end
     destroyWaypoints()
 end))
+
+mkToggle("Teleport", "Item ESP", "Shows unpurchased items through walls")
+local itemEspGuis = {}
+
+local function updateItemESP()
+    for _, gui in ipairs(itemEspGuis) do pcall(function() gui:Destroy() end) end
+    itemEspGuis = {}
+    if not toggles["Item ESP"] then return end
+    for _, area in Purchases:GetChildren() do
+        local buttons = area:FindFirstChild("Buttons")
+        if buttons then
+            local function scan(folder)
+                for _, item in folder:GetChildren() do
+                    if item:IsA("Folder") then scan(item)
+                    elseif item:IsA("Model") and item:GetAttribute("Purchased") ~= true then
+                        local prim = item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")
+                        if prim then
+                            local bb = Instance.new("BillboardGui")
+                            bb.Name = "SH_ItemESP"
+                            bb.Size = UDim2.new(0, 80, 0, 18)
+                            bb.StudsOffset = Vector3.new(0, 4, 0)
+                            bb.AlwaysOnTop = true
+                            bb.Adornee = prim
+                            bb.Parent = game.CoreGui
+
+                            local displayName = item:GetAttribute("DisplayName") or item.Name
+                            local enabled = item:GetAttribute("Enabled") == true
+                            local col = enabled and Color3.fromRGB(50, 200, 80) or Color3.fromRGB(255, 70, 70)
+
+                            local l = Instance.new("TextLabel")
+                            l.Size = UDim2.new(1, 0, 1, 0)
+                            l.BackgroundTransparency = 0.4
+                            l.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                            l.Text = displayName
+                            l.Font = Enum.Font.GothamBold
+                            l.TextSize = 8
+                            l.TextColor3 = col
+                            l.Parent = bb
+                            Instance.new("UICorner", l).CornerRadius = UDim.new(0, 4)
+
+                            table.insert(itemEspGuis, bb)
+                        end
+                    end
+                end
+            end
+            scan(buttons)
+        end
+    end
+end
+
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        if toggles["Item ESP"] then updateItemESP() end
+        task.wait(3)
+    end
+    for _, gui in ipairs(itemEspGuis) do pcall(function() gui:Destroy() end) end
+end))
+
+table.insert(togRefresh, function()
+    if not toggles["Item ESP"] then
+        for _, gui in ipairs(itemEspGuis) do pcall(function() gui:Destroy() end) end
+        itemEspGuis = {}
+    end
+end)
 
 mkToggle("Teleport", "Teleport Loop", "Cycles through all areas every 5s")
 table.insert(threads, task.spawn(function()
@@ -2334,6 +2464,16 @@ table.insert(togRefresh, function()
     if not toggles["Player ESP"] then
         for _, gui in ipairs(espGuis) do pcall(function() gui:Destroy() end) end
         espGuis = {}
+    end
+end)
+
+mkToggle("Settings", "God Mode", "Speed + Jump + Noclip + Infinite Jump")
+table.insert(togRefresh, function()
+    if toggles["God Mode"] then
+        toggles["Speed Boost"] = true
+        toggles["Jump Boost"] = true
+        toggles["Noclip"] = true
+        toggles["Infinite Jump"] = true
     end
 end)
 
