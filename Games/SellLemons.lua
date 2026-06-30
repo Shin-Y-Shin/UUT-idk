@@ -139,6 +139,8 @@ end))
 -- NOTIFICATION SYSTEM
 --------------------------------------------------------------
 local notifContainer
+local notifLog = {}
+local MAX_LOG = 50
 
 local notifColors = {
     info = Color3.fromRGB(45, 140, 255),
@@ -148,6 +150,8 @@ local notifColors = {
 }
 
 local function showNotif(text, nType)
+    table.insert(notifLog, 1, {text = text, time = os.date("%I:%M:%S"), type = nType or "default"})
+    if #notifLog > MAX_LOG then table.remove(notifLog) end
     if not notifContainer or not notifContainer.Parent then return end
     local pipColor = nType and notifColors[nType] or nil
 
@@ -1279,6 +1283,33 @@ mkDualStat("Home",
 )
 
 mkSpacer("Home", 6)
+mkSection("Home", "Purchase Progress")
+
+mkStatCard("Home", "ITEMS PROGRESS", function()
+    local total, bought = 0, 0
+    for _, area in Purchases:GetChildren() do
+        local buttons = area:FindFirstChild("Buttons")
+        if buttons then
+            local function scan(folder)
+                for _, item in folder:GetChildren() do
+                    if item:IsA("Folder") then scan(item)
+                    elseif item:IsA("Model") then
+                        total = total + 1
+                        if item:GetAttribute("Purchased") == true then
+                            bought = bought + 1
+                        end
+                    end
+                end
+            end
+            scan(buttons)
+        end
+    end
+    if total == 0 then return "---" end
+    local pct = math.floor((bought / total) * 100)
+    return bought .. " / " .. total .. " (" .. pct .. "%)"
+end)
+
+mkSpacer("Home", 6)
 mkSection("Home", "Quick Actions")
 
 mkButton("Home", "Enable All Farm", function()
@@ -1496,6 +1527,17 @@ end)
 mkSpacer("Farm", 2)
 mkSection("Farm", "Misc")
 
+mkToggle("Farm", "Auto Click All", "Clicks every ClickDetector in tycoon")
+loop("Auto Click All", function()
+    for _, desc in myTycoon:GetDescendants() do
+        if not getgenv().SL_RUNNING or not toggles["Auto Click All"] then return end
+        if desc:IsA("ClickDetector") then
+            pcall(fireclickdetector, desc)
+        end
+    end
+    task.wait(0.2)
+end)
+
 mkToggle("Farm", "Auto All Prompts", "Fires every ProximityPrompt in tycoon")
 loop("Auto All Prompts", function()
     for _, desc in myTycoon:GetDescendants() do
@@ -1626,6 +1668,42 @@ mkButton("Boost", "Double Offline Cash", function()
     pcall(function() Remotes.DoubleOfflineCash:InvokeServer() end)
     showNotif("Offline Cash doubled")
 end)
+mkButton("Boost", "Spam Upgrade All x50", function()
+    showNotif("Spam upgrading earners...", "info")
+    task.spawn(function()
+        for _ = 1, 50 do
+            for _, areaName in ipairs(areaNames) do
+                local area = Purchases:FindFirstChild(areaName)
+                if area then
+                    local m = area:FindFirstChild(areaName)
+                    if m and m:IsA("Model") then
+                        local part = m:FindFirstChild(areaName)
+                        if part then
+                            local upg = part:FindFirstChild("Upgrade")
+                            if upg and upg:IsA("RemoteFunction") then
+                                pcall(function() upg:InvokeServer(1) end)
+                            end
+                        end
+                    end
+                end
+            end
+            task.wait(0.02)
+        end
+        showNotif("50x upgrade complete!", "success")
+    end)
+end)
+
+mkButton("Boost", "Spam Power Upgrade x100", function()
+    showNotif("Spamming power upgrades...", "info")
+    task.spawn(function()
+        for _ = 1, 100 do
+            pcall(function() Remotes.UpgradePowerLevel:InvokeServer() end)
+            task.wait(0.02)
+        end
+        showNotif("100x power upgrade done!", "success")
+    end)
+end)
+
 mkSpacer("Boost", 2)
 mkButton("Boost", "Collect ALL Boosts", function()
     pcall(function() Remotes.UseTimeCash:InvokeServer() end)
@@ -1940,6 +2018,69 @@ mkStatCard("Stats", "FRUIT TPS", function()
 end)
 
 mkSpacer("Stats", 6)
+mkSection("Stats", "Area Progress")
+
+for _, areaName in ipairs(areaNames) do
+    mkStatCard("Stats", areaName:upper(), function()
+        local area = Purchases:FindFirstChild(areaName)
+        if not area then return "N/A" end
+        local buttons = area:FindFirstChild("Buttons")
+        if not buttons then return "No items" end
+        local total, bought = 0, 0
+        local function scan(folder)
+            for _, item in folder:GetChildren() do
+                if item:IsA("Folder") then scan(item)
+                elseif item:IsA("Model") then
+                    total = total + 1
+                    if item:GetAttribute("Purchased") == true then bought = bought + 1 end
+                end
+            end
+        end
+        scan(buttons)
+        if total == 0 then return "Empty" end
+        local pct = math.floor((bought / total) * 100)
+        return bought .. "/" .. total .. " (" .. pct .. "%)"
+    end)
+end
+
+mkSpacer("Stats", 6)
+mkSection("Stats", "Notification Log")
+
+local logLabel = Instance.new("TextLabel")
+logLabel.LayoutOrder = nxt("Stats")
+logLabel.Size = UDim2.new(1, 0, 0, 14)
+logLabel.BackgroundTransparency = 1
+logLabel.Font = Enum.Font.Gotham
+logLabel.TextSize = 9
+logLabel.TextXAlignment = Enum.TextXAlignment.Left
+logLabel.TextWrapped = true
+logLabel.AutomaticSize = Enum.AutomaticSize.Y
+logLabel.ZIndex = 2
+logLabel.RichText = true
+logLabel.Parent = tabPages.Stats
+bnd(logLabel, {TextColor3 = "sub"})
+
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        local lines = {}
+        local count = math.min(15, #notifLog)
+        for i = 1, count do
+            local entry = notifLog[i]
+            local color = "gray"
+            if entry.type == "success" then color = "#32C850"
+            elseif entry.type == "warning" then color = "#FFB41E"
+            elseif entry.type == "error" then color = "#FF4646"
+            elseif entry.type == "info" then color = "#2D8CFF"
+            end
+            table.insert(lines, '<font color="' .. color .. '">[' .. entry.time .. ']</font> ' .. entry.text)
+        end
+        logLabel.Text = #lines > 0 and table.concat(lines, "\n") or "No notifications yet"
+        logLabel.Size = UDim2.new(1, 0, 0, math.max(14, #lines * 13))
+        task.wait(1)
+    end
+end))
+
+mkSpacer("Stats", 6)
 mkSection("Stats", "Export")
 
 mkButton("Stats", "Copy Stats to Clipboard", function()
@@ -2047,6 +2188,25 @@ UIS.JumpRequest:Connect(function()
 end)
 
 mkToggle("Settings", "Noclip", "Walk through walls")
+
+mkToggle("Settings", "Anti Void", "TP back if you fall below -200")
+table.insert(threads, task.spawn(function()
+    local safePos = CFrame.new(0, 50, 0)
+    while getgenv().SL_RUNNING do
+        if toggles["Anti Void"] then
+            local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                if hrp.Position.Y > -100 then
+                    safePos = hrp.CFrame
+                elseif hrp.Position.Y < -200 then
+                    hrp.CFrame = safePos
+                    showNotif("Anti-Void: Saved you!", "warning")
+                end
+            end
+        end
+        task.wait(0.2)
+    end
+end))
 table.insert(threads, task.spawn(function()
     RunS.Stepped:Connect(function()
         if toggles["Noclip"] and LP.Character then
@@ -2177,6 +2337,50 @@ table.insert(togRefresh, function()
     end
 end)
 
+mkToggle("Settings", "Click TP", "Hold Ctrl + Click to teleport")
+local mouse = LP:GetMouse()
+mouse.Button1Down:Connect(function()
+    if toggles["Click TP"] and UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
+        local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+        if hrp and mouse.Hit then
+            hrp.CFrame = mouse.Hit + Vector3.new(0, 3, 0)
+            showNotif("Click TP!", "info")
+        end
+    end
+end)
+
+mkToggle("Settings", "Speed Display", "Shows speed on screen")
+local speedGui = Instance.new("TextLabel")
+speedGui.Size = UDim2.new(0, 120, 0, 20)
+speedGui.Position = UDim2.new(0.5, -60, 0, 5)
+speedGui.BackgroundTransparency = 0.5
+speedGui.BorderSizePixel = 0
+speedGui.Font = Enum.Font.GothamBold
+speedGui.TextSize = 11
+speedGui.ZIndex = 50
+speedGui.Visible = false
+speedGui.Parent = Gui
+bnd(speedGui, {BackgroundColor3 = "bg", TextColor3 = "text"})
+Instance.new("UICorner", speedGui).CornerRadius = UDim.new(0, 6)
+
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        if toggles["Speed Display"] then
+            speedGui.Visible = true
+            local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local vel = hrp.AssemblyLinearVelocity or hrp.Velocity
+                local speed = math.floor(Vector3.new(vel.X, 0, vel.Z).Magnitude)
+                speedGui.Text = speed .. " studs/s"
+            end
+        else
+            speedGui.Visible = false
+        end
+        task.wait(0.1)
+    end
+    speedGui.Visible = false
+end))
+
 mkSpacer("Settings", 2)
 mkSection("Settings", "Camera & World")
 
@@ -2261,6 +2465,21 @@ table.insert(threads, task.spawn(function()
             end
         end
         task.wait(0.3)
+    end
+end))
+
+mkToggle("Settings", "Spin", "Continuously rotates your character")
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        if toggles["Spin"] then
+            local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(15), 0)
+            end
+            task.wait(1/30)
+        else
+            task.wait(0.3)
+        end
     end
 end))
 
@@ -2427,6 +2646,27 @@ table.insert(threads, task.spawn(function()
         end
     end
 end))
+
+mkSpacer("Settings", 4)
+mkSection("Settings", "UI")
+
+mkToggle("Settings", "Compact Mode", "Smaller window for less screen blocking")
+table.insert(togRefresh, function()
+    if toggles["Compact Mode"] then
+        if not isMinimized then
+            tw(Main, {Size = UDim2.new(0, WIN_W - 80, 0, WIN_H - 80)}, 0.3, Enum.EasingStyle.Back)
+        end
+    else
+        if not isMinimized then
+            tw(Main, {Size = UDim2.new(0, WIN_W, 0, WIN_H)}, 0.3, Enum.EasingStyle.Back)
+        end
+    end
+end)
+
+mkToggle("Settings", "Always On Top", "Keeps UI above game elements")
+table.insert(togRefresh, function()
+    Gui.DisplayOrder = toggles["Always On Top"] and 999 or 0
+end)
 
 mkSpacer("Settings", 6)
 mkSection("Settings", "About")
