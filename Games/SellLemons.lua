@@ -64,6 +64,11 @@ local Themes = {
 }
 
 local C = Themes[1]
+if getgenv().SL_THEME then
+    for _, t in ipairs(Themes) do
+        if t.name == getgenv().SL_THEME then C = t break end
+    end
+end
 local binds = {}
 local togRefresh = {}
 
@@ -757,10 +762,23 @@ local function mkToggle(tab, name, desc, parent)
     ref()
     table.insert(togRefresh, ref)
 
-    tr.MouseButton1Click:Connect(function()
+    local function doToggle()
         toggles[name] = not toggles[name]
         ref()
-    end)
+    end
+    tr.MouseButton1Click:Connect(doToggle)
+
+    -- Click anywhere on the row to toggle
+    local rowBtn = Instance.new("TextButton")
+    rowBtn.Size = UDim2.new(1, -44, 1, 0)
+    rowBtn.Position = UDim2.new(0, 0, 0, 0)
+    rowBtn.BackgroundTransparency = 1
+    rowBtn.Text = ""
+    rowBtn.ZIndex = 3
+    rowBtn.AutoButtonColor = false
+    rowBtn.Parent = h
+    rowBtn.MouseButton1Click:Connect(doToggle)
+
     h.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseMovement then tw(h, {BackgroundColor3 = C.cardH}, 0.08) end
     end)
@@ -1374,6 +1392,88 @@ mkButton("Teleport", "TP to My Tycoon", function()
     end
 end)
 
+mkSpacer("Teleport", 4)
+mkSection("Teleport", "Players")
+
+-- Dynamic player TP buttons
+local playerTPContainer = Instance.new("Frame")
+playerTPContainer.LayoutOrder = nxt("Teleport")
+playerTPContainer.Size = UDim2.new(1, 0, 0, 0)
+playerTPContainer.BackgroundTransparency = 1
+playerTPContainer.AutomaticSize = Enum.AutomaticSize.Y
+playerTPContainer.ZIndex = 2
+playerTPContainer.Parent = tabPages.Teleport
+
+local playerTPLayout = Instance.new("UIListLayout", playerTPContainer)
+playerTPLayout.Padding = UDim.new(0, 4)
+playerTPLayout.SortOrder = Enum.SortOrder.Name
+
+local function refreshPlayerTP()
+    for _, c in playerTPContainer:GetChildren() do
+        if c:IsA("TextButton") then c:Destroy() end
+    end
+    for _, player in Players:GetPlayers() do
+        if player ~= LP then
+            local b = Instance.new("TextButton")
+            b.Name = player.Name
+            b.Size = UDim2.new(1, 0, 0, 26)
+            b.Text = ""
+            b.BorderSizePixel = 0
+            b.ZIndex = 2
+            b.AutoButtonColor = false
+            b.Parent = playerTPContainer
+            bnd(b, {BackgroundColor3 = "card"})
+            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+
+            local l = Instance.new("TextLabel")
+            l.Size = UDim2.new(1, -30, 1, 0)
+            l.Position = UDim2.new(0, 14, 0, 0)
+            l.BackgroundTransparency = 1
+            l.Text = player.Name
+            l.Font = Enum.Font.Gotham
+            l.TextSize = 11
+            l.TextXAlignment = Enum.TextXAlignment.Left
+            l.ZIndex = 3
+            l.Parent = b
+            bnd(l, {TextColor3 = "sub"})
+
+            local arrow = Instance.new("TextLabel")
+            arrow.Size = UDim2.new(0, 14, 1, 0)
+            arrow.Position = UDim2.new(1, -18, 0, 0)
+            arrow.BackgroundTransparency = 1
+            arrow.Text = "\xE2\x80\xBA"
+            arrow.Font = Enum.Font.GothamBold
+            arrow.TextSize = 14
+            arrow.ZIndex = 3
+            arrow.Parent = b
+            bnd(arrow, {TextColor3 = "dim"})
+
+            b.MouseButton1Click:Connect(function()
+                local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+                local targetHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                if hrp and targetHRP then
+                    hrp.CFrame = targetHRP.CFrame + Vector3.new(0, 3, 0)
+                    showNotif("TP: " .. player.Name)
+                end
+                tw(b, {BackgroundColor3 = C.accent}, 0.04)
+                task.delay(0.12, function() tw(b, {BackgroundColor3 = C.card}, 0.3) end)
+            end)
+            b.MouseEnter:Connect(function()
+                tw(b, {BackgroundColor3 = C.cardH}, 0.08)
+                tw(l, {TextColor3 = C.text}, 0.08)
+            end)
+            b.MouseLeave:Connect(function()
+                tw(b, {BackgroundColor3 = C.card}, 0.1)
+                tw(l, {TextColor3 = C.sub}, 0.1)
+            end)
+        end
+    end
+end
+
+refreshPlayerTP()
+Players.PlayerAdded:Connect(function() task.delay(1, refreshPlayerTP) end)
+Players.PlayerRemoving:Connect(function() task.delay(0.5, refreshPlayerTP) end)
+
 --------------------------------------------------------------
 -- STATS TAB
 --------------------------------------------------------------
@@ -1625,10 +1725,10 @@ table.insert(togRefresh, function()
 end)
 
 mkToggle("Settings", "Fullbright", "Removes darkness & fog")
-local savedLighting = {}
+local savedLighting = nil
 loop("Fullbright", function()
     local L = game:GetService("Lighting")
-    if #savedLighting == 0 then
+    if not savedLighting then
         savedLighting = {
             Brightness = L.Brightness,
             ClockTime = L.ClockTime,
@@ -1645,11 +1745,10 @@ loop("Fullbright", function()
     task.wait(1)
 end)
 
--- Restore lighting when Fullbright toggled off
 table.insert(threads, task.spawn(function()
     local wasOn = false
     while getgenv().SL_RUNNING do
-        if wasOn and not toggles["Fullbright"] and #savedLighting > 0 then
+        if wasOn and not toggles["Fullbright"] and savedLighting then
             local L = game:GetService("Lighting")
             pcall(function()
                 L.Brightness = savedLighting.Brightness
@@ -1746,6 +1845,7 @@ for _, theme in ipairs(Themes) do
 
     b.MouseButton1Click:Connect(function()
         C = theme
+        getgenv().SL_THEME = theme.name
         applyTheme()
         showNotif("Theme: " .. theme.name)
     end)
