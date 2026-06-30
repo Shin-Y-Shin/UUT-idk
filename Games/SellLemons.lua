@@ -103,7 +103,7 @@ local sessionStart = os.clock()
 local startCash = 0
 pcall(function()
     local ls = LP:FindFirstChild("leaderstats")
-    if ls and ls:FindFirstChild("Cash") then startCash = ls.Cash.Value end
+    if ls and ls:FindFirstChild("Cash") then startCash = tonumber(ls.Cash.Value) or 0 end
 end)
 local stats = {clicks = 0, bought = 0, upgrades = 0, rebirths = 0, drops = 0, income = 0, evolves = 0, ascends = 0, fruits_tp = 0}
 local cashHistory = {}
@@ -651,11 +651,14 @@ StatusBarRight.Parent = StatusBar
 bnd(StatusBarRight, {TextColor3 = "dim"})
 
 table.insert(threads, task.spawn(function()
+    task.wait(2)
     while getgenv().SL_RUNNING do
         local n = countActive()
         local e = os.clock() - sessionStart
         local uptime = string.format("%dm %ds", math.floor(e / 60), math.floor(e % 60))
-        StatusBarLbl.Text = n .. " active | " .. uptime .. " | " .. fmtNum(getCash()) .. " cash"
+        local cashStr = ""
+        pcall(function() cashStr = fmtNum(getCash()) end)
+        StatusBarLbl.Text = n .. " active | " .. uptime .. " | " .. cashStr .. " cash"
         StatusBarRight.Text = "ShinyHub v6.0 | !help for cmds"
         task.wait(1)
     end
@@ -1280,7 +1283,7 @@ end
 local function getCash()
     local ls = LP:FindFirstChild("leaderstats")
     local cash = ls and ls:FindFirstChild("Cash")
-    return cash and cash.Value or 0
+    return tonumber(cash and cash.Value) or 0
 end
 
 local function getVal(name)
