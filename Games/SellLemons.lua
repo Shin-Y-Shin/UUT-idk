@@ -971,7 +971,7 @@ local function mkToggle(tab, name, desc, parent)
 
     local function doToggle()
         toggles[name] = not toggles[name]
-        ref()
+        for _, fn in ipairs(togRefresh) do pcall(fn) end
     end
     tr.MouseButton1Click:Connect(doToggle)
 
@@ -3027,14 +3027,24 @@ table.insert(togRefresh, function()
         toggles["Noclip"] = true
         toggles["Infinite Jump"] = true
         godModeWasOn = true
-        for _, fn in ipairs(togRefresh) do pcall(fn) end
     elseif not toggles["God Mode"] and godModeWasOn then
         toggles["Speed Boost"] = false
         toggles["Jump Boost"] = false
         toggles["Noclip"] = false
         toggles["Infinite Jump"] = false
         godModeWasOn = false
-        for _, fn in ipairs(togRefresh) do pcall(fn) end
+        local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = defaultWalkSpeed
+            hum.JumpPower = defaultJumpPower
+        end
+        if LP.Character then
+            for _, part in LP.Character:GetDescendants() do
+                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                    part.CanCollide = true
+                end
+            end
+        end
     end
 end)
 
