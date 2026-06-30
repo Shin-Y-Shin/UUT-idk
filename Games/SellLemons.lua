@@ -1620,6 +1620,29 @@ end)
 mkSpacer("Farm", 2)
 mkSection("Farm", "Misc")
 
+mkToggle("Farm", "Auto Workspace Drops", "Collects dropped items in workspace")
+loop("Auto Workspace Drops", function()
+    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then task.wait(1) return end
+    for _, obj in game.Workspace:GetChildren() do
+        if not getgenv().SL_RUNNING or not toggles["Auto Workspace Drops"] then return end
+        if obj:IsA("BasePart") and obj:FindFirstChild("ClickDetector") then
+            if (obj.Position - hrp.Position).Magnitude < 200 then
+                pcall(fireclickdetector, obj.ClickDetector)
+            end
+        elseif obj:IsA("Model") then
+            local cd = obj:FindFirstChildWhichIsA("ClickDetector", true)
+            if cd then
+                local part = cd.Parent
+                if part and part:IsA("BasePart") and (part.Position - hrp.Position).Magnitude < 200 then
+                    pcall(fireclickdetector, cd)
+                end
+            end
+        end
+    end
+    task.wait(0.3)
+end)
+
 mkToggle("Farm", "Auto Click All", "Clicks every ClickDetector in tycoon")
 loop("Auto Click All", function()
     for _, desc in myTycoon:GetDescendants() do
@@ -2052,6 +2075,59 @@ mkButton("Teleport", "TP to Random Player", function()
         showNotif("No other players!", "warning")
     end
 end)
+
+mkButton("Teleport", "TP Behind Random Player", function()
+    local others = {}
+    for _, p in Players:GetPlayers() do
+        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(others, p)
+        end
+    end
+    if #others > 0 then
+        local target = others[math.random(#others)]
+        local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+        local tHRP = target.Character.HumanoidRootPart
+        if hrp then
+            hrp.CFrame = tHRP.CFrame * CFrame.new(0, 0, 5)
+            showNotif("Behind: " .. target.Name, "info")
+        end
+    else
+        showNotif("No other players!", "warning")
+    end
+end)
+
+mkSpacer("Teleport", 4)
+mkSection("Teleport", "Follow")
+
+mkToggle("Teleport", "Follow Nearest Player", "Auto-TPs to closest player")
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        if toggles["Follow Nearest Player"] then
+            local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local closest, closestDist = nil, math.huge
+                for _, p in Players:GetPlayers() do
+                    if p ~= LP and p.Character then
+                        local pHRP = p.Character:FindFirstChild("HumanoidRootPart")
+                        if pHRP then
+                            local dist = (hrp.Position - pHRP.Position).Magnitude
+                            if dist < closestDist then
+                                closest = pHRP
+                                closestDist = dist
+                            end
+                        end
+                    end
+                end
+                if closest and closestDist > 10 then
+                    hrp.CFrame = closest.CFrame * CFrame.new(0, 0, 5)
+                end
+            end
+            task.wait(2)
+        else
+            task.wait(0.3)
+        end
+    end
+end))
 
 mkSpacer("Teleport", 4)
 mkSection("Teleport", "Players")
@@ -2691,6 +2767,58 @@ table.insert(threads, task.spawn(function()
         task.wait(0.3)
     end
 end))
+
+mkToggle("Settings", "Freeze", "Anchors your HumanoidRootPart")
+loop("Freeze", function()
+    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.Anchored = true end
+    task.wait(0.3)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Freeze"] then
+        local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.Anchored = false end
+    end
+end)
+
+mkToggle("Settings", "Big Head", "Makes your head huge")
+loop("Big Head", function()
+    local head = LP.Character and LP.Character:FindFirstChild("Head")
+    if head then
+        head.Size = Vector3.new(4, 3, 3)
+        local mesh = head:FindFirstChildOfClass("SpecialMesh")
+        if mesh then mesh.Scale = Vector3.new(2.25, 2.25, 2.25) end
+    end
+    task.wait(0.5)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Big Head"] then
+        local head = LP.Character and LP.Character:FindFirstChild("Head")
+        if head then
+            head.Size = Vector3.new(2, 1, 1)
+            local mesh = head:FindFirstChildOfClass("SpecialMesh")
+            if mesh then mesh.Scale = Vector3.new(1.25, 1.25, 1.25) end
+        end
+    end
+end)
+
+mkToggle("Settings", "Tiny Character", "Shrinks your character")
+loop("Tiny Character", function()
+    local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        pcall(function()
+            local bd = hum:FindFirstChildOfClass("HumanoidDescription")
+            if bd then
+                bd.HeightScale = 0.3
+                bd.WidthScale = 0.3
+                bd.DepthScale = 0.3
+                bd.HeadScale = 0.3
+                hum:ApplyDescription(bd)
+            end
+        end)
+    end
+    task.wait(2)
+end)
 
 mkToggle("Settings", "Spin", "Continuously rotates your character")
 table.insert(threads, task.spawn(function()
