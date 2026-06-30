@@ -1,5 +1,5 @@
 --[[
-    ShinyHub — Sell Lemons 🍋 v6.0
+    ShinyHub — Sell Lemons 🍋 v6.1
     Ultimate edition
 ]]
 
@@ -590,7 +590,7 @@ local VerLbl = Instance.new("TextLabel")
 VerLbl.Size = UDim2.new(1, -10, 0, 14)
 VerLbl.Position = UDim2.new(0, 5, 1, -32)
 VerLbl.BackgroundTransparency = 1
-VerLbl.Text = "v6.0"
+VerLbl.Text = "v6.1"
 VerLbl.Font = Enum.Font.GothamBold
 VerLbl.TextSize = 9
 VerLbl.ZIndex = 6
@@ -659,7 +659,7 @@ table.insert(threads, task.spawn(function()
         local cashStr = ""
         pcall(function() cashStr = getCashDisplay() end)
         StatusBarLbl.Text = n .. " active | " .. uptime .. " | " .. cashStr
-        StatusBarRight.Text = "ShinyHub v6.0 | !help for cmds"
+        StatusBarRight.Text = "ShinyHub v6.1 | !help for cmds"
         task.wait(1)
     end
 end))
@@ -1270,14 +1270,18 @@ local function mkDualStat(tab, label1, fn1, label2, fn2, parent)
     end
 end
 
+local fmtSuffixes = {"K","M","B","T","Qa","Qi","Sx","Sp","Oc","No","Dc","Udc","Ddc","Tdc","Qtdc","Qndc","Sxdc","Spdc","Ocdc","Nodc","Vgn","Uvg","Dvg","Tvg","Qtvg","Qnvg","Sxvg","Spvg","Ocvg","Novg","Tgn","Utg"}
 local function fmtNum(n)
     if type(n) ~= "number" then return tostring(n) end
-    if n >= 1e15 then return string.format("%.2fQd", n / 1e15)
-    elseif n >= 1e12 then return string.format("%.2fT", n / 1e12)
-    elseif n >= 1e9 then return string.format("%.2fB", n / 1e9)
-    elseif n >= 1e6 then return string.format("%.2fM", n / 1e6)
-    elseif n >= 1e3 then return string.format("%.1fK", n / 1e3)
-    else return tostring(math.floor(n)) end
+    if n ~= n or n == math.huge then return "---" end
+    if n < 1e3 then return tostring(math.floor(n)) end
+    for i = #fmtSuffixes, 1, -1 do
+        local threshold = 10 ^ (i * 3)
+        if n >= threshold then
+            return string.format("%.2f%s", n / threshold, fmtSuffixes[i])
+        end
+    end
+    return tostring(math.floor(n))
 end
 
 local cashSuffixes = {
@@ -1322,8 +1326,10 @@ end
 
 local function getVal(name)
     if not Values then return nil end
-    local v = Values:FindFirstChild(name)
-    return v and v.Value or nil
+    local v = Values:FindFirstChild(name, true)
+    if not v then return nil end
+    local ok, val = pcall(function() return v.Value end)
+    return ok and val or nil
 end
 
 local function getCashPerHour()
@@ -1592,11 +1598,14 @@ mkSpacer("Farm", 2)
 mkSection("Farm", "Reach")
 
 mkToggle("Farm", "Extended Reach", "Extends ClickDetector & ProximityPrompt range")
+local reachOriginals = {}
 loop("Extended Reach", function()
     for _, desc in myTycoon:GetDescendants() do
         if desc:IsA("ClickDetector") then
+            if reachOriginals[desc] == nil then reachOriginals[desc] = desc.MaxActivationDistance end
             desc.MaxActivationDistance = 9999
         elseif desc:IsA("ProximityPrompt") then
+            if reachOriginals[desc] == nil then reachOriginals[desc] = desc.MaxActivationDistance end
             desc.MaxActivationDistance = 9999
         end
     end
@@ -1604,11 +1613,20 @@ loop("Extended Reach", function()
     if trees then
         for _, desc in trees:GetDescendants() do
             if desc:IsA("ClickDetector") then
+                if reachOriginals[desc] == nil then reachOriginals[desc] = desc.MaxActivationDistance end
                 desc.MaxActivationDistance = 9999
             end
         end
     end
     task.wait(5)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Extended Reach"] then
+        for obj, orig in pairs(reachOriginals) do
+            pcall(function() if obj and obj.Parent then obj.MaxActivationDistance = orig end end)
+        end
+        reachOriginals = {}
+    end
 end)
 
 mkSpacer("Farm", 2)
@@ -2770,11 +2788,27 @@ end))
 --------------------------------------------------------------
 mkSection("Settings", "Player Mods")
 
+local defaultWalkSpeed = 16
+local defaultJumpPower = 50
+pcall(function()
+    local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        defaultWalkSpeed = hum.WalkSpeed
+        defaultJumpPower = hum.JumpPower
+    end
+end)
+
 mkToggle("Settings", "Speed Boost", "WalkSpeed 80")
 loop("Speed Boost", function()
     local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
     if hum then hum.WalkSpeed = 80 end
     task.wait(0.5)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Speed Boost"] and not toggles["Super Speed"] and not toggles["Custom WalkSpeed"] then
+        local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = defaultWalkSpeed end
+    end
 end)
 
 mkToggle("Settings", "Super Speed", "WalkSpeed 150")
@@ -2782,6 +2816,12 @@ loop("Super Speed", function()
     local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
     if hum then hum.WalkSpeed = 150 end
     task.wait(0.5)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Super Speed"] and not toggles["Speed Boost"] and not toggles["Custom WalkSpeed"] then
+        local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = defaultWalkSpeed end
+    end
 end)
 
 local getCustomSpeed = mkSlider("Settings", "Custom Speed", 16, 500, 16, 1)
@@ -2791,12 +2831,24 @@ loop("Custom WalkSpeed", function()
     if hum then hum.WalkSpeed = getCustomSpeed() end
     task.wait(0.3)
 end)
+table.insert(togRefresh, function()
+    if not toggles["Custom WalkSpeed"] and not toggles["Speed Boost"] and not toggles["Super Speed"] then
+        local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = defaultWalkSpeed end
+    end
+end)
 
 mkToggle("Settings", "Jump Boost", "JumpPower 120")
 loop("Jump Boost", function()
     local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
     if hum then hum.JumpPower = 120 end
     task.wait(0.5)
+end)
+table.insert(togRefresh, function()
+    if not toggles["Jump Boost"] then
+        local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.JumpPower = defaultJumpPower end
+    end
 end)
 
 mkToggle("Settings", "Infinite Jump", "Jump mid-air")
@@ -2808,6 +2860,15 @@ UIS.JumpRequest:Connect(function()
 end)
 
 mkToggle("Settings", "Noclip", "Walk through walls")
+table.insert(togRefresh, function()
+    if not toggles["Noclip"] and LP.Character then
+        for _, part in LP.Character:GetDescendants() do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.CanCollide = true
+            end
+        end
+    end
+end)
 
 mkToggle("Settings", "Anti Void", "TP back if you fall below -200")
 table.insert(threads, task.spawn(function()
@@ -2958,12 +3019,22 @@ table.insert(togRefresh, function()
 end)
 
 mkToggle("Settings", "God Mode", "Speed + Jump + Noclip + Infinite Jump")
+local godModeWasOn = false
 table.insert(togRefresh, function()
-    if toggles["God Mode"] then
+    if toggles["God Mode"] and not godModeWasOn then
         toggles["Speed Boost"] = true
         toggles["Jump Boost"] = true
         toggles["Noclip"] = true
         toggles["Infinite Jump"] = true
+        godModeWasOn = true
+        for _, fn in ipairs(togRefresh) do pcall(fn) end
+    elseif not toggles["God Mode"] and godModeWasOn then
+        toggles["Speed Boost"] = false
+        toggles["Jump Boost"] = false
+        toggles["Noclip"] = false
+        toggles["Infinite Jump"] = false
+        godModeWasOn = false
+        for _, fn in ipairs(togRefresh) do pcall(fn) end
     end
 end)
 
@@ -3037,7 +3108,7 @@ loop("Low Gravity", function()
     task.wait(0.5)
 end)
 table.insert(togRefresh, function()
-    if not toggles["Low Gravity"] and savedGravity then
+    if not toggles["Low Gravity"] and not toggles["Zero Gravity"] and savedGravity then
         game.Workspace.Gravity = savedGravity
     end
 end)
@@ -3149,6 +3220,23 @@ loop("Tiny Character", function()
     end
     task.wait(2)
 end)
+table.insert(togRefresh, function()
+    if not toggles["Tiny Character"] then
+        pcall(function()
+            local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+            if hum then
+                local bd = hum:FindFirstChildOfClass("HumanoidDescription")
+                if bd then
+                    bd.HeightScale = 1
+                    bd.WidthScale = 1
+                    bd.DepthScale = 1
+                    bd.HeadScale = 1
+                    hum:ApplyDescription(bd)
+                end
+            end
+        end)
+    end
+end)
 
 mkToggle("Settings", "Spin", "Continuously rotates your character")
 table.insert(threads, task.spawn(function()
@@ -3173,7 +3261,7 @@ local xrayOriginals = {}
 loop("XRay", function()
     for _, part in game.Workspace:GetDescendants() do
         if part:IsA("BasePart") and not part:IsDescendantOf(LP.Character or game) then
-            if not xrayOriginals[part] then
+            if xrayOriginals[part] == nil then
                 xrayOriginals[part] = part.Transparency
             end
             if part.Transparency < 0.7 then
@@ -3183,17 +3271,49 @@ loop("XRay", function()
     end
     task.wait(2)
 end)
-table.insert(togRefresh, function()
-    if not toggles["XRay"] then
-        for part, orig in pairs(xrayOriginals) do
-            pcall(function() part.Transparency = orig end)
-        end
-        xrayOriginals = {}
+local function disableXRay()
+    for part, orig in pairs(xrayOriginals) do
+        pcall(function()
+            if part and part.Parent then
+                part.Transparency = orig
+            end
+        end)
     end
+    xrayOriginals = {}
+end
+table.insert(togRefresh, function()
+    if not toggles["XRay"] then disableXRay() end
 end)
+
+local savedLighting = nil
+local function saveLighting()
+    if savedLighting then return end
+    local L = game:GetService("Lighting")
+    savedLighting = {
+        Brightness = L.Brightness,
+        ClockTime = L.ClockTime,
+        FogEnd = L.FogEnd,
+        GlobalShadows = L.GlobalShadows,
+        Ambient = L.Ambient,
+    }
+end
+
+local function restoreLighting()
+    if not savedLighting then return end
+    if toggles["Night Mode"] or toggles["Fullbright"] then return end
+    local L = game:GetService("Lighting")
+    pcall(function()
+        L.Brightness = savedLighting.Brightness
+        L.ClockTime = savedLighting.ClockTime
+        L.FogEnd = savedLighting.FogEnd
+        L.GlobalShadows = savedLighting.GlobalShadows
+        L.Ambient = savedLighting.Ambient
+    end)
+end
 
 mkToggle("Settings", "Night Mode", "Sets game to nighttime")
 loop("Night Mode", function()
+    saveLighting()
     local L = game:GetService("Lighting")
     L.ClockTime = 0
     L.Brightness = 0.5
@@ -3201,29 +3321,13 @@ loop("Night Mode", function()
     task.wait(1)
 end)
 table.insert(togRefresh, function()
-    if not toggles["Night Mode"] and savedLighting then
-        local L = game:GetService("Lighting")
-        pcall(function()
-            L.ClockTime = savedLighting.ClockTime
-            L.Brightness = savedLighting.Brightness
-            L.Ambient = savedLighting.Ambient
-        end)
-    end
+    if not toggles["Night Mode"] then restoreLighting() end
 end)
 
 mkToggle("Settings", "Fullbright", "Removes darkness & fog")
-local savedLighting = nil
 loop("Fullbright", function()
+    saveLighting()
     local L = game:GetService("Lighting")
-    if not savedLighting then
-        savedLighting = {
-            Brightness = L.Brightness,
-            ClockTime = L.ClockTime,
-            FogEnd = L.FogEnd,
-            GlobalShadows = L.GlobalShadows,
-            Ambient = L.Ambient,
-        }
-    end
     L.Brightness = 2
     L.ClockTime = 14
     L.FogEnd = 100000
@@ -3231,24 +3335,9 @@ loop("Fullbright", function()
     L.Ambient = Color3.fromRGB(178, 178, 178)
     task.wait(1)
 end)
-
-table.insert(threads, task.spawn(function()
-    local wasOn = false
-    while getgenv().SL_RUNNING do
-        if wasOn and not toggles["Fullbright"] and savedLighting then
-            local L = game:GetService("Lighting")
-            pcall(function()
-                L.Brightness = savedLighting.Brightness
-                L.ClockTime = savedLighting.ClockTime
-                L.FogEnd = savedLighting.FogEnd
-                L.GlobalShadows = savedLighting.GlobalShadows
-                L.Ambient = savedLighting.Ambient
-            end)
-        end
-        wasOn = toggles["Fullbright"]
-        task.wait(0.3)
-    end
-end))
+table.insert(togRefresh, function()
+    if not toggles["Fullbright"] then restoreLighting() end
+end)
 
 mkSpacer("Settings", 4)
 mkSection("Settings", "Actions")
@@ -3483,7 +3572,7 @@ local creditsTitle = Instance.new("TextLabel")
 creditsTitle.Size = UDim2.new(1, -20, 0, 16)
 creditsTitle.Position = UDim2.new(0, 14, 0, 6)
 creditsTitle.BackgroundTransparency = 1
-creditsTitle.Text = "ShinyHub v6.0 — Ultimate Edition"
+creditsTitle.Text = "ShinyHub v6.1 — Ultimate Edition"
 creditsTitle.Font = Enum.Font.GothamBlack
 creditsTitle.TextSize = 11
 creditsTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -3648,7 +3737,7 @@ switchTab("Home")
 
 -- Startup notifications
 task.delay(1.2, function()
-    showNotif("ShinyHub v6.0 loaded", "success")
+    showNotif("ShinyHub v6.1 loaded", "success")
     task.delay(0.5, function()
         showNotif("Anti-AFK active", "info")
         task.delay(0.5, function()
