@@ -1539,6 +1539,29 @@ mkSection("Farm", "Farm Speed")
 local getFarmDelay = mkSlider("Farm", "Cycle Delay (ms)", 10, 500, 200, 10)
 
 mkSpacer("Farm", 2)
+mkSection("Farm", "Reach")
+
+mkToggle("Farm", "Extended Reach", "Extends ClickDetector & ProximityPrompt range")
+loop("Extended Reach", function()
+    for _, desc in myTycoon:GetDescendants() do
+        if desc:IsA("ClickDetector") then
+            desc.MaxActivationDistance = 9999
+        elseif desc:IsA("ProximityPrompt") then
+            desc.MaxActivationDistance = 9999
+        end
+    end
+    local trees = Constant:FindFirstChild("Trees")
+    if trees then
+        for _, desc in trees:GetDescendants() do
+            if desc:IsA("ClickDetector") then
+                desc.MaxActivationDistance = 9999
+            end
+        end
+    end
+    task.wait(5)
+end)
+
+mkSpacer("Farm", 2)
 mkSection("Farm", "Purchasing")
 
 mkToggle("Farm", "Auto Buy Items", "Buys all enabled & available items")
@@ -1563,7 +1586,7 @@ loop("Auto Buy Items", function()
             scan(buttons)
         end
     end
-    task.wait(0.3)
+    task.wait(getFarmDelay()/1000)
 end)
 
 mkButton("Farm", "Buy All Now (One Pass)", function()
@@ -1611,7 +1634,7 @@ loop("Auto Click Income", function()
             end
         end
     end
-    task.wait(0.2)
+    task.wait(getFarmDelay()/1000)
 end)
 
 mkToggle("Farm", "Auto Upgrade Earners", "Levels up all earner stands")
@@ -1633,7 +1656,7 @@ loop("Auto Upgrade Earners", function()
             end
         end
     end
-    task.wait(0.2)
+    task.wait(getFarmDelay()/1000)
 end)
 
 mkSpacer("Farm", 2)
@@ -1675,7 +1698,7 @@ loop("Auto Collect Fruit", function()
             end
         end
     end
-    task.wait(0.05)
+    task.wait(math.max(0.05, getFarmDelay()/1000 * 0.25))
 end)
 
 mkToggle("Farm", "Auto Collect Drops", "Redeems cash drops")
@@ -1746,7 +1769,7 @@ loop("Auto Click All", function()
             pcall(fireclickdetector, desc)
         end
     end
-    task.wait(0.2)
+    task.wait(getFarmDelay()/1000)
 end)
 
 mkToggle("Farm", "Auto All Prompts", "Fires every ProximityPrompt in tycoon")
@@ -1757,7 +1780,7 @@ loop("Auto All Prompts", function()
             pcall(fireproximityprompt, desc)
         end
     end
-    task.wait(0.3)
+    task.wait(getFarmDelay()/1000)
 end)
 
 mkSpacer("Farm", 2)
