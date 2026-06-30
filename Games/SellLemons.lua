@@ -1375,6 +1375,32 @@ mkStatCard("Home", "ACTIVE FEATURES", function()
 end)
 
 mkSpacer("Home", 6)
+mkSection("Home", "Shortcuts")
+
+local shortcutsCard = Instance.new("Frame")
+shortcutsCard.LayoutOrder = nxt("Home")
+shortcutsCard.Size = UDim2.new(1, 0, 0, 68)
+shortcutsCard.BorderSizePixel = 0
+shortcutsCard.ZIndex = 2
+shortcutsCard.Parent = tabPages.Home
+bnd(shortcutsCard, {BackgroundColor3 = "card"})
+Instance.new("UICorner", shortcutsCard).CornerRadius = UDim.new(0, 8)
+
+local shortcutsText = Instance.new("TextLabel")
+shortcutsText.Size = UDim2.new(1, -20, 1, -6)
+shortcutsText.Position = UDim2.new(0, 14, 0, 3)
+shortcutsText.BackgroundTransparency = 1
+shortcutsText.Text = "1-6: Switch tabs  |  RShift: Hide UI\n\\: Panic (disable all)  |  Ctrl+Click: TP\nDouble-click tab: Toggle all in tab\nChat: !speed !jump !fov !tp !afk !off !help"
+shortcutsText.Font = Enum.Font.Gotham
+shortcutsText.TextSize = 9
+shortcutsText.TextXAlignment = Enum.TextXAlignment.Left
+shortcutsText.TextWrapped = true
+shortcutsText.ZIndex = 3
+shortcutsText.RichText = false
+shortcutsText.Parent = shortcutsCard
+bnd(shortcutsText, {TextColor3 = "sub"})
+
+mkSpacer("Home", 6)
 mkSection("Home", "Purchase Progress")
 
 mkStatCard("Home", "ITEMS PROGRESS", function()
@@ -2431,6 +2457,20 @@ mkButton("Stats", "Copy Stats to Clipboard", function()
 end)
 
 mkSpacer("Stats", 3)
+mkSection("Stats", "Server Info")
+
+mkDualStat("Stats",
+    "SERVER AGE", function()
+        local age = game.Workspace.DistributedGameTime
+        if age >= 3600 then return string.format("%dh %dm", math.floor(age/3600), math.floor(age%3600/60)) end
+        return string.format("%dm %ds", math.floor(age/60), math.floor(age%60))
+    end,
+    "GAME ID", function()
+        return tostring(game.JobId):sub(1, 8) .. "..."
+    end
+)
+
+mkSpacer("Stats", 3)
 mkSection("Stats", "Cash Leaderboard")
 
 local leaderLabel = Instance.new("TextLabel")
@@ -3109,6 +3149,65 @@ end)
 mkToggle("Settings", "Always On Top", "Keeps UI above game elements")
 table.insert(togRefresh, function()
     Gui.DisplayOrder = toggles["Always On Top"] and 999 or 0
+end)
+
+mkToggle("Settings", "Sparkle Effect", "Adds sparkles to your character")
+local sparkleEffect = nil
+table.insert(togRefresh, function()
+    if toggles["Sparkle Effect"] then
+        if not sparkleEffect then
+            local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                sparkleEffect = Instance.new("Sparkles")
+                sparkleEffect.Name = "SH_Sparkle"
+                sparkleEffect.SparkleColor = C.accent
+                sparkleEffect.Parent = hrp
+            end
+        end
+    else
+        if sparkleEffect then sparkleEffect:Destroy() sparkleEffect = nil end
+    end
+end)
+
+mkToggle("Settings", "Fire Effect", "Adds fire to your character")
+local fireEffect = nil
+table.insert(togRefresh, function()
+    if toggles["Fire Effect"] then
+        if not fireEffect then
+            local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                fireEffect = Instance.new("Fire")
+                fireEffect.Name = "SH_Fire"
+                fireEffect.Size = 5
+                fireEffect.Heat = 10
+                fireEffect.Color = C.accent
+                fireEffect.SecondaryColor = Color3.fromRGB(255, 200, 50)
+                fireEffect.Parent = hrp
+            end
+        end
+    else
+        if fireEffect then fireEffect:Destroy() fireEffect = nil end
+    end
+end)
+
+mkToggle("Settings", "Smoke Effect", "Adds smoke trail to character")
+local smokeEffect = nil
+table.insert(togRefresh, function()
+    if toggles["Smoke Effect"] then
+        if not smokeEffect then
+            local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                smokeEffect = Instance.new("Smoke")
+                smokeEffect.Name = "SH_Smoke"
+                smokeEffect.Size = 3
+                smokeEffect.Opacity = 0.3
+                smokeEffect.Color = C.accent
+                smokeEffect.Parent = hrp
+            end
+        end
+    else
+        if smokeEffect then smokeEffect:Destroy() smokeEffect = nil end
+    end
 end)
 
 mkSpacer("Settings", 6)
