@@ -1243,6 +1243,13 @@ mkButton("Boost", "Double Offline Cash", function()
     pcall(function() Remotes.DoubleOfflineCash:InvokeServer() end)
     showNotif("Offline Cash doubled")
 end)
+mkSpacer("Boost", 2)
+mkButton("Boost", "Collect ALL Boosts", function()
+    pcall(function() Remotes.UseTimeCash:InvokeServer() end)
+    pcall(function() Remotes.UseEarnerBoost:InvokeServer() end)
+    pcall(function() Remotes.DoubleOfflineCash:InvokeServer() end)
+    showNotif("All boosts collected!")
+end)
 
 --------------------------------------------------------------
 -- TELEPORT TAB
@@ -1566,6 +1573,57 @@ table.insert(threads, task.spawn(function()
     if wasFlying then stopFly() end
 end))
 
+mkToggle("Settings", "Player ESP", "See players through walls")
+local espGuis = {}
+local function updateESP()
+    for _, gui in ipairs(espGuis) do pcall(function() gui:Destroy() end) end
+    espGuis = {}
+    if not toggles["Player ESP"] then return end
+    for _, player in Players:GetPlayers() do
+        if player ~= LP and player.Character then
+            local head = player.Character:FindFirstChild("Head")
+            if head then
+                local bb = Instance.new("BillboardGui")
+                bb.Name = "SH_ESP"
+                bb.Size = UDim2.new(0, 80, 0, 22)
+                bb.StudsOffset = Vector3.new(0, 3, 0)
+                bb.AlwaysOnTop = true
+                bb.Adornee = head
+                bb.Parent = game.CoreGui
+
+                local l = Instance.new("TextLabel")
+                l.Size = UDim2.new(1, 0, 1, 0)
+                l.BackgroundTransparency = 0.5
+                l.BackgroundColor3 = C.bg
+                l.Text = player.Name
+                l.Font = Enum.Font.GothamBold
+                l.TextSize = 10
+                l.TextColor3 = C.accent
+                l.Parent = bb
+                Instance.new("UICorner", l).CornerRadius = UDim.new(0, 4)
+
+                table.insert(espGuis, bb)
+            end
+        end
+    end
+end
+
+table.insert(threads, task.spawn(function()
+    while getgenv().SL_RUNNING do
+        if toggles["Player ESP"] then updateESP() end
+        task.wait(2)
+    end
+    for _, gui in ipairs(espGuis) do pcall(function() gui:Destroy() end) end
+end))
+
+-- Clean up ESP when toggled off
+table.insert(togRefresh, function()
+    if not toggles["Player ESP"] then
+        for _, gui in ipairs(espGuis) do pcall(function() gui:Destroy() end) end
+        espGuis = {}
+    end
+end)
+
 mkToggle("Settings", "Fullbright", "Removes darkness & fog")
 local savedLighting = {}
 loop("Fullbright", function()
@@ -1730,17 +1788,50 @@ Main.BackgroundTransparency = 1
 Main.Size = UDim2.new(0, WIN_W, 0, 0)
 Strk.Transparency = 1
 
+-- Hide sidebar elements for stagger
+for _, t in pairs(tabBtns) do
+    t.lbl.TextTransparency = 1
+    t.btn.BackgroundTransparency = 1
+end
+SideIndicator.BackgroundTransparency = 1
+VerLbl.TextTransparency = 1
+KeyLbl.TextTransparency = 1
+PageTitle.TextTransparency = 1
+PageSub.TextTransparency = 1
+
 task.delay(0.05, function()
     tw(Main, {Size = UDim2.new(0, WIN_W, 0, WIN_H), BackgroundTransparency = 0}, 0.5, Enum.EasingStyle.Back)
     tw(Strk, {Transparency = 0.5}, 0.6)
+
+    -- Stagger sidebar items
+    task.delay(0.3, function()
+        for i, name in ipairs(tabNames) do
+            task.delay((i - 1) * 0.06, function()
+                local t = tabBtns[name]
+                tw(t.lbl, {TextTransparency = 0}, 0.3)
+            end)
+        end
+        task.delay(0.4, function()
+            tw(SideIndicator, {BackgroundTransparency = 0}, 0.3)
+            tw(VerLbl, {TextTransparency = 0}, 0.3)
+            tw(KeyLbl, {TextTransparency = 0}, 0.3)
+        end)
+        task.delay(0.2, function()
+            tw(PageTitle, {TextTransparency = 0}, 0.3)
+            tw(PageSub, {TextTransparency = 0}, 0.3)
+        end)
+    end)
 end)
 
 switchTab("Home")
 
--- Startup notification
-task.delay(1, function()
+-- Startup notifications
+task.delay(1.2, function()
     showNotif("ShinyHub v5 loaded")
-    task.delay(0.5, function()
+    task.delay(0.6, function()
         showNotif("Anti-AFK active")
+        task.delay(0.6, function()
+            showNotif(countActive() .. " features ready")
+        end)
     end)
 end)
