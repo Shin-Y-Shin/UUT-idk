@@ -768,15 +768,59 @@ end)
 mkSpacer("Farm", 4)
 mkSection("Farm", "Auto Farm")
 
-mkToggle("Farm", "Auto Farm", "Attacks nearest enemy — mode affects speed & height")
+mkToggle("Farm", "Auto Farm", "Floats above enemies, auto-equips & attacks fast")
+
+local farmBP = nil
+local farmGyro = nil
+table.insert(togRefresh, function()
+    if not toggles["Auto Farm"] then
+        if farmBP then pcall(function() farmBP:Destroy() end) farmBP = nil end
+        if farmGyro then pcall(function() farmGyro:Destroy() end) farmGyro = nil end
+    end
+end)
+
 loop("Auto Farm", function()
-    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then task.wait(1) return end
+    local char = LP.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum then task.wait(0.5) return end
 
     local mode = getFarmMode()
-    local height = mode == "Legit" and 0 or (mode == "Normal" and 25 or 50)
-    local atkDelay = mode == "Legit" and 0.35 or (mode == "Normal" and 0.15 or 0.05)
-    local atkCount = mode == "Legit" and 1 or (mode == "Normal" and 2 or 5)
+    local height = mode == "Legit" and 7 or (mode == "Normal" and 10 or 12)
+    local atkBurst = mode == "Legit" and 3 or (mode == "Normal" and 5 or 10)
+
+    pcall(function() hum:ChangeState(Enum.HumanoidStateType.Physics) end)
+    hrp.Velocity = Vector3.new(0, 0, 0)
+
+    if not char:FindFirstChildOfClass("Tool") then
+        for _, t in LP.Backpack:GetChildren() do
+            if t:IsA("Tool") then
+                pcall(function() hum:EquipTool(t) end)
+                task.wait(0.1)
+                break
+            end
+        end
+    end
+
+    if not farmBP or farmBP.Parent ~= hrp then
+        if farmBP then pcall(function() farmBP:Destroy() end) end
+        farmBP = Instance.new("BodyPosition")
+        farmBP.Name = "SH_FarmBP"
+        farmBP.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        farmBP.D = 1000
+        farmBP.P = 50000
+        farmBP.Parent = hrp
+    end
+
+    if not farmGyro or farmGyro.Parent ~= hrp then
+        if farmGyro then pcall(function() farmGyro:Destroy() end) end
+        farmGyro = Instance.new("BodyGyro")
+        farmGyro.Name = "SH_FarmGyro"
+        farmGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        farmGyro.D = 200
+        farmGyro.P = 10000
+        farmGyro.Parent = hrp
+    end
 
     local closest, dist = nil, math.huge
     local enemies = game.Workspace:FindFirstChild("Enemies")
@@ -794,36 +838,44 @@ loop("Auto Farm", function()
     if closest then
         local mHrp = closest:FindFirstChild("HumanoidRootPart")
         if mHrp then
-            hrp.CFrame = mHrp.CFrame * CFrame.new(0, height, 3)
+            local ePos = mHrp.Position
+            local aPos = Vector3.new(ePos.X, ePos.Y + height, ePos.Z)
+            farmBP.Position = aPos
+            farmGyro.CFrame = CFrame.new(aPos, ePos)
+            hrp.CFrame = CFrame.new(aPos, ePos)
+            hrp.Velocity = Vector3.new(0, 0, 0)
+
+            local vim = game:GetService("VirtualInputManager")
+            for _ = 1, atkBurst do
+                pcall(function()
+                    vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                    task.wait(0.005)
+                    vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                end)
+            end
         end
-        local vim = game:GetService("VirtualInputManager")
-        for _ = 1, atkCount do
-            pcall(function()
-                vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                task.wait(0.02)
-                vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-            end)
-            task.wait(atkDelay / atkCount)
-        end
+    else
+        farmBP.Position = hrp.Position
     end
-    task.wait(atkDelay)
+    task.wait(0.05)
 end)
 
-mkToggle("Farm", "Bring Mobs", "Pulls nearby enemies to you")
+mkToggle("Farm", "Bring Mobs", "Pulls nearby enemies under you")
 loop("Bring Mobs", function()
     local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then task.wait(1) return end
     local enemies = game.Workspace:FindFirstChild("Enemies")
     if enemies then
+        local below = Vector3.new(hrp.Position.X, hrp.Position.Y - 15, hrp.Position.Z)
         for _, mob in enemies:GetChildren() do
             local mHrp = mob:FindFirstChild("HumanoidRootPart")
             local mHum = mob:FindFirstChild("Humanoid")
-            if mHrp and mHum and mHum.Health > 0 and (mHrp.Position - hrp.Position).Magnitude < 250 then
-                mHrp.CFrame = hrp.CFrame * CFrame.new(0, 0, 5)
+            if mHrp and mHum and mHum.Health > 0 and (mHrp.Position - hrp.Position).Magnitude < 300 then
+                mHrp.CFrame = CFrame.new(below + Vector3.new(math.random(-3,3), 0, math.random(-3,3)))
             end
         end
     end
-    task.wait(0.25)
+    task.wait(0.2)
 end)
 
 mkToggle("Farm", "Auto Quest", "Interacts with quest NPCs")
