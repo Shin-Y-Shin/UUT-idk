@@ -770,12 +770,13 @@ mkSection("Farm", "Auto Farm")
 
 mkToggle("Farm", "Auto Farm", "Floats above enemies, auto-equips & attacks fast")
 
-local farmBP = nil
-local farmGyro = nil
+local farmConn = nil
+local farmTarget = nil
+
 table.insert(togRefresh, function()
     if not toggles["Auto Farm"] then
-        if farmBP then pcall(function() farmBP:Destroy() end) farmBP = nil end
-        if farmGyro then pcall(function() farmGyro:Destroy() end) farmGyro = nil end
+        if farmConn then pcall(function() farmConn:Disconnect() end) farmConn = nil end
+        farmTarget = nil
     end
 end)
 
@@ -789,9 +790,6 @@ loop("Auto Farm", function()
     local height = mode == "Legit" and 7 or (mode == "Normal" and 10 or 12)
     local atkBurst = mode == "Legit" and 3 or (mode == "Normal" and 5 or 10)
 
-    pcall(function() hum:ChangeState(Enum.HumanoidStateType.Physics) end)
-    hrp.Velocity = Vector3.new(0, 0, 0)
-
     if not char:FindFirstChildOfClass("Tool") then
         for _, t in LP.Backpack:GetChildren() do
             if t:IsA("Tool") then
@@ -800,26 +798,6 @@ loop("Auto Farm", function()
                 break
             end
         end
-    end
-
-    if not farmBP or farmBP.Parent ~= hrp then
-        if farmBP then pcall(function() farmBP:Destroy() end) end
-        farmBP = Instance.new("BodyPosition")
-        farmBP.Name = "SH_FarmBP"
-        farmBP.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        farmBP.D = 1000
-        farmBP.P = 50000
-        farmBP.Parent = hrp
-    end
-
-    if not farmGyro or farmGyro.Parent ~= hrp then
-        if farmGyro then pcall(function() farmGyro:Destroy() end) end
-        farmGyro = Instance.new("BodyGyro")
-        farmGyro.Name = "SH_FarmGyro"
-        farmGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-        farmGyro.D = 200
-        farmGyro.P = 10000
-        farmGyro.Parent = hrp
     end
 
     local closest, dist = nil, math.huge
@@ -838,24 +816,44 @@ loop("Auto Farm", function()
     if closest then
         local mHrp = closest:FindFirstChild("HumanoidRootPart")
         if mHrp then
-            local ePos = mHrp.Position
-            local aPos = Vector3.new(ePos.X, ePos.Y + height, ePos.Z)
-            farmBP.Position = aPos
-            farmGyro.CFrame = CFrame.new(aPos, ePos)
-            hrp.CFrame = CFrame.new(aPos, ePos)
-            hrp.Velocity = Vector3.new(0, 0, 0)
-
-            local vim = game:GetService("VirtualInputManager")
-            for _ = 1, atkBurst do
-                pcall(function()
-                    vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                    task.wait(0.005)
-                    vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-                end)
-            end
+            farmTarget = CFrame.new(
+                mHrp.Position.X, mHrp.Position.Y + height, mHrp.Position.Z,
+                mHrp.Position.X, mHrp.Position.Y, mHrp.Position.Z
+            )
+            farmTarget = CFrame.new(
+                Vector3.new(mHrp.Position.X, mHrp.Position.Y + height, mHrp.Position.Z),
+                mHrp.Position
+            )
         end
     else
-        farmBP.Position = hrp.Position
+        farmTarget = hrp.CFrame
+    end
+
+    if not farmConn then
+        local RS = game:GetService("RunService")
+        farmConn = RS.RenderStepped:Connect(function()
+            if not toggles["Auto Farm"] then return end
+            local c = LP.Character
+            local r = c and c:FindFirstChild("HumanoidRootPart")
+            local h = c and c:FindFirstChildOfClass("Humanoid")
+            if not r or not h then return end
+            if farmTarget then
+                r.CFrame = farmTarget
+                r.Velocity = Vector3.new(0, 0, 0)
+                r.RotVelocity = Vector3.new(0, 0, 0)
+                pcall(function() r.AssemblyLinearVelocity = Vector3.new(0, 0, 0) end)
+                pcall(function() r.AssemblyAngularVelocity = Vector3.new(0, 0, 0) end)
+            end
+        end)
+    end
+
+    local vim = game:GetService("VirtualInputManager")
+    for _ = 1, atkBurst do
+        pcall(function()
+            vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            task.wait(0.005)
+            vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        end)
     end
     task.wait(0.05)
 end)
