@@ -794,6 +794,8 @@ do
     end)
 end
 
+local VIM = game:GetService("VirtualInputManager")
+
 loop("Auto Farm", function()
     local char = LP.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -802,7 +804,6 @@ loop("Auto Farm", function()
 
     local mode = getFarmMode()
     local height = mode == "Legit" and 7 or (mode == "Normal" and 10 or 12)
-    local atkBurst = mode == "Legit" and 3 or (mode == "Normal" and 5 or 10)
 
     if not char:FindFirstChildOfClass("Tool") then
         for _, t in LP.Backpack:GetChildren() do
@@ -839,16 +840,14 @@ loop("Auto Farm", function()
         farmCF = hrp.CFrame
     end
 
-    local vim = game:GetService("VirtualInputManager")
-    for _ = 1, atkBurst do
-        pcall(function()
-            vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        end)
-        pcall(function()
-            vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-        end)
-    end
-    task.wait(0.1)
+    pcall(function()
+        VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+    end)
+    task.wait(0.03)
+    pcall(function()
+        VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+    end)
+    task.wait(0.07)
 end)
 
 mkToggle("Farm", "Bring Mobs", "Pulls nearby enemies under you")
