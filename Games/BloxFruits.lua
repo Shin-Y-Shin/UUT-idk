@@ -771,14 +771,28 @@ mkSection("Farm", "Auto Farm")
 mkToggle("Farm", "Auto Farm", "Floats above enemies, auto-equips & attacks fast")
 
 local farmConn = nil
-local farmTarget = nil
+local farmCF = nil
+local V3_ZERO = Vector3.new(0, 0, 0)
 
 table.insert(togRefresh, function()
     if not toggles["Auto Farm"] then
         if farmConn then pcall(function() farmConn:Disconnect() end) farmConn = nil end
-        farmTarget = nil
+        farmCF = nil
     end
 end)
+
+do
+    local RS = game:GetService("RunService")
+    farmConn = RS.Heartbeat:Connect(function()
+        if not toggles["Auto Farm"] then return end
+        local r = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+        if r and farmCF then
+            r.CFrame = farmCF
+            r.AssemblyLinearVelocity = V3_ZERO
+            r.AssemblyAngularVelocity = V3_ZERO
+        end
+    end)
+end
 
 loop("Auto Farm", function()
     local char = LP.Character
@@ -816,46 +830,25 @@ loop("Auto Farm", function()
     if closest then
         local mHrp = closest:FindFirstChild("HumanoidRootPart")
         if mHrp then
-            farmTarget = CFrame.new(
-                mHrp.Position.X, mHrp.Position.Y + height, mHrp.Position.Z,
-                mHrp.Position.X, mHrp.Position.Y, mHrp.Position.Z
-            )
-            farmTarget = CFrame.new(
+            farmCF = CFrame.new(
                 Vector3.new(mHrp.Position.X, mHrp.Position.Y + height, mHrp.Position.Z),
                 mHrp.Position
             )
         end
     else
-        farmTarget = hrp.CFrame
-    end
-
-    if not farmConn then
-        local RS = game:GetService("RunService")
-        farmConn = RS.RenderStepped:Connect(function()
-            if not toggles["Auto Farm"] then return end
-            local c = LP.Character
-            local r = c and c:FindFirstChild("HumanoidRootPart")
-            local h = c and c:FindFirstChildOfClass("Humanoid")
-            if not r or not h then return end
-            if farmTarget then
-                r.CFrame = farmTarget
-                r.Velocity = Vector3.new(0, 0, 0)
-                r.RotVelocity = Vector3.new(0, 0, 0)
-                pcall(function() r.AssemblyLinearVelocity = Vector3.new(0, 0, 0) end)
-                pcall(function() r.AssemblyAngularVelocity = Vector3.new(0, 0, 0) end)
-            end
-        end)
+        farmCF = hrp.CFrame
     end
 
     local vim = game:GetService("VirtualInputManager")
     for _ = 1, atkBurst do
         pcall(function()
             vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-            task.wait(0.005)
+        end)
+        pcall(function()
             vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
         end)
     end
-    task.wait(0.05)
+    task.wait(0.1)
 end)
 
 mkToggle("Farm", "Bring Mobs", "Pulls nearby enemies under you")
